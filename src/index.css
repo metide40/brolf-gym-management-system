@@ -125,3 +125,21 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Toasts: use the app's card colours instead of Sonner's green/red presets. */
+html [data-sonner-toaster][data-sonner-theme] {
+  --normal-bg: var(--card);
+  --normal-text: var(--card-foreground);
+  --normal-border: var(--border);
+}
+
+/* Keep problems distinguishable: amber for warnings, rose for errors. */
+html [data-sonner-toast][data-type="error"] {
+  --normal-border: #fb7185;
+}
+html [data-sonner-toast][data-type="error"] [data-icon] {
+  color: #fb7185;
+}
+html [data-sonner-toast][data-type="warning"] [data-icon] {
+  color: #f59e0b;
+}

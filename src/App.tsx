@@ -347,7 +347,7 @@ export default function App() {
 
   return (
     <>
-      <Toaster position="top-right" theme={theme} richColors closeButton />
+      <Toaster position="top-right" theme={theme} closeButton />
       <Routes>
         <Route path="/" element={<Navigate to={session ? homeFor(session.role) : "/login"} replace />} />
         <Route path="/login" element={<LoginRoute session={session} theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} onLogin={handleLogin} />} />
