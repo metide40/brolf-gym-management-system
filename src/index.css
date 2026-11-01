@@ -143,3 +143,11 @@ html [data-sonner-toast][data-type="error"] [data-icon] {
 html [data-sonner-toast][data-type="warning"] [data-icon] {
   color: #f59e0b;
 }
+
+/* Success toasts: neutral card, green check icon. */
+html [data-sonner-toast][data-type="success"] [data-icon] {
+  color: #16a34a;
+}
+html.dark [data-sonner-toast][data-type="success"] [data-icon] {
+  color: #22c55e;
+}
