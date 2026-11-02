@@ -2,18 +2,19 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
-import { AlertTriangle, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDashboard, Lock, QrCode, Settings as SettingsIcon, TrendingUp, Users, Wrench } from "lucide-react";
+import { AlertTriangle, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDashboard, Lock, QrCode, Settings as SettingsIcon, TrendingUp, UserCog, Users, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import * as api from "./api/mockApi";
 import { DEMO_ACCOUNTS } from "./mockData";
-import type { BodyMeasurement, Database, FitnessGoal, MemberInput, PaymentStatus, PlanName, Role, Session, WorkoutPlan } from "./types";
+import type { BodyMeasurement, ClassInput, Database, FitnessGoal, MemberInput, PaymentStatus, PlanName, Role, Session, TrainerInput, WorkoutPlan } from "./types";
 import Navbar from "./components/Navbar";
 import { btnGhost, btnPrimary, input, panel } from "./components/Navbar";
 import { AdminOverview, MemberDirectory, ReceptionTerminal, SettingsView } from "./components/AdminReceptionViews";
 import { MemberClasses, MemberPass, MemberProgress, MemberWorkouts, TrainerView } from "./components/TrainerMemberViews";
 import { ClassesBoard, EquipmentView, PaymentsView } from "./components/BillingEquipmentViews";
+import { TrainersView } from "./components/TrainersView";
 
-type TabKey = "overview" | "members" | "payments" | "equipment" | "settings" | "terminal" | "classes" | "roster" | "pass" | "workouts" | "progress";
+type TabKey = "overview" | "members" | "trainers" | "payments" | "equipment" | "settings" | "terminal" | "classes" | "roster" | "pass" | "workouts" | "progress";
 
 type RouteItem = { path: string; key: TabKey; label: string; icon: LucideIcon };
 
@@ -22,6 +23,7 @@ const ROUTES: Record<Role, RouteItem[]> = {
   admin: [
     { path: "overview", key: "overview", label: "Overview", icon: LayoutDashboard },
     { path: "members", key: "members", label: "Members", icon: Users },
+    { path: "trainers", key: "trainers", label: "Trainers", icon: UserCog },
     { path: "billing", key: "payments", label: "Billing", icon: CreditCard },
     { path: "classes", key: "classes", label: "Classes", icon: Calendar },
     { path: "equipment", key: "equipment", label: "Equipment", icon: Wrench },
@@ -213,6 +215,31 @@ export default function App() {
     }
   };
 
+  // Like mutate, but reports whether it worked so forms know whether to close.
+  const mutateOk = async (fn: () => Promise<Database>, message: string): Promise<boolean> => {
+    try {
+      setDb(await fn());
+      toast.success(message);
+      return true;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Something went wrong.");
+      return false;
+    }
+  };
+
+  const handleCancelClass = async (classId: string): Promise<boolean> => {
+    try {
+      const result = await api.cancelClass(classId);
+      setDb(result.db);
+      if (result.ok) toast.success(result.message);
+      else toast.error(result.message);
+      return result.ok;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not cancel the class.");
+      return false;
+    }
+  };
+
   const handleCheckIn = async (code: string) => {
     try {
       const result = await api.checkIn(code);
@@ -287,6 +314,14 @@ export default function App() {
             onRenew={(id: string, days: number) => mutate(() => api.renewMembership(id, days), `Membership extended by ${days} days`)}
           />
         );
+      case "trainers":
+        return (
+          <TrainersView
+            db={db}
+            onSave={(t: TrainerInput) => mutateOk(() => api.saveTrainer(t), t.id ? "Trainer updated" : "Trainer added")}
+            onDelete={(id: string) => mutateOk(() => api.deleteTrainer(id), "Trainer removed")}
+          />
+        );
       case "terminal":
         return <ReceptionTerminal db={db} onCheckIn={handleCheckIn} />;
       case "classes":
@@ -299,7 +334,15 @@ export default function App() {
             onLeaveWaitlist={(id: string) => mutate(() => api.leaveWaitlist(id), "Left the waitlist")}
           />
         ) : (
-          <ClassesBoard db={db} onBook={handleBook} onCancel={handleCancel} onCheckIn={handleCheckIn} />
+          <ClassesBoard
+            db={db}
+            onBook={handleBook}
+            onCancel={handleCancel}
+            onCheckIn={handleCheckIn}
+            canManage={session.role === "admin" || session.role === "reception"}
+            onSaveClass={(c: ClassInput) => mutateOk(() => api.saveClass(c), c.id ? "Class updated" : "Class created")}
+            onCancelClass={handleCancelClass}
+          />
         );
       case "payments":
         return <PaymentsView db={db} onLogPayment={(p: { memberId: string; plan: PlanName; amount: number; method: string; status: PaymentStatus }) => mutate(() => api.addPayment(p), "Payment recorded")} />;

@@ -10,6 +10,7 @@ import type {
   FitnessGoal,
   Member,
   MemberStatus,
+  Trainer,
   PaymentRecord,
   PlanName,
   Role,
@@ -23,13 +24,13 @@ export const DEMO_ACCOUNTS = [
   { role: "member" as Role, name: "Jordan Reyes", email: "member@fitcore.io", password: "fitcore123", title: "VIP Member" },
 ];
 
-export const TRAINERS = [
-  { id: "TR-01", name: "Marcus Vale", specialty: "Strength & Conditioning" },
-  { id: "TR-02", name: "Lena Okafor", specialty: "HIIT / Metabolic" },
-  { id: "TR-03", name: "Diego Santos", specialty: "Spin & Endurance" },
-  { id: "TR-04", name: "Priya Raman", specialty: "Power Yoga & Mobility" },
-  { id: "TR-05", name: "Erik Lindqvist", specialty: "CrossFit / Olympic Lifts" },
-  { id: "TR-06", name: "Amara Diallo", specialty: "Boxing & Conditioning" },
+export const SEED_TRAINERS: Trainer[] = [
+  { id: "TR-01", name: "Marcus Vale", specialty: "Strength & Conditioning", availability: "Mon-Fri, 06:00-14:00" },
+  { id: "TR-02", name: "Lena Okafor", specialty: "HIIT / Metabolic", availability: "Mon-Sat, 06:00-12:00" },
+  { id: "TR-03", name: "Diego Santos", specialty: "Spin & Endurance", availability: "Tue-Sun, 07:00-15:00" },
+  { id: "TR-04", name: "Priya Raman", specialty: "Power Yoga & Mobility", availability: "Mon-Fri, 08:00-16:00" },
+  { id: "TR-05", name: "Erik Lindqvist", specialty: "CrossFit / Olympic Lifts", availability: "Mon-Sat, 14:00-21:00" },
+  { id: "TR-06", name: "Amara Diallo", specialty: "Boxing & Conditioning", availability: "Wed-Sun, 12:00-20:00" },
 ];
 
 export const PLANS: Record<PlanName, { price: number; days: number }> = {
@@ -50,8 +51,8 @@ export function deriveStatus(endDate: string, frozen?: boolean): MemberStatus {
   return "Active";
 }
 
-export function trainerName(id: string): string {
-  return TRAINERS.find((t) => t.id === id)?.name ?? "Unassigned";
+export function trainerName(trainers: Trainer[], id: string): string {
+  return trainers.find((t) => t.id === id)?.name ?? "Unassigned";
 }
 
 const FIRST = ["Jordan", "Ava", "Noah", "Marcus", "Lena", "Diego", "Priya", "Erik", "Amara", "Sofia", "Liam", "Mia", "Ethan", "Zoe", "Omar", "Nina", "Kai", "Ruth", "Tariq", "Isla"];
@@ -102,7 +103,7 @@ export function seedDatabase(): Database {
       plan,
       startDate: shift(startOffset),
       endDate,
-      trainerId: TRAINERS[i % TRAINERS.length].id,
+      trainerId: SEED_TRAINERS[i % SEED_TRAINERS.length].id,
       status: deriveStatus(endDate, frozen),
       frozen,
       joinedAt: shift(startOffset),
@@ -115,7 +116,7 @@ export function seedDatabase(): Database {
     id: `CLS-${String(i + 1).padStart(2, "0")}`,
     name: c[0],
     category: c[1],
-    trainerId: TRAINERS[c[2]].id,
+    trainerId: SEED_TRAINERS[c[2]].id,
     day: c[3],
     time: c[4],
     duration: c[5],
@@ -277,6 +278,7 @@ export function seedDatabase(): Database {
 
   return {
     members,
+    trainers: SEED_TRAINERS.map((t) => ({ ...t })),
     classes,
     bookings,
     waitlist,
@@ -294,6 +296,7 @@ export function seedDatabase(): Database {
       taxRate: 0.08,
       openHours: "05:00 - 23:00",
       dayPassPrice: 25,
+      maxCapacity: 120,
     },
   };
 }

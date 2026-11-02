@@ -34,7 +34,7 @@ Every screen has its own URL in the form `/<role>/<section>`. Signed-out visitor
 
 | Role | Pages |
 |---|---|
-| Administrator | `/admin/overview`, `/admin/members`, `/admin/billing`, `/admin/classes`, `/admin/equipment`, `/admin/settings` |
+| Administrator | `/admin/overview`, `/admin/members`, `/admin/trainers`, `/admin/billing`, `/admin/classes`, `/admin/equipment`, `/admin/settings` |
 | Reception | `/reception/check-in`, `/reception/members`, `/reception/classes`, `/reception/billing` |
 | Trainer | `/trainer/roster`, `/trainer/schedule`, `/trainer/equipment` |
 | Member | `/member/pass`, `/member/classes`, `/member/programs`, `/member/progress` |
@@ -43,7 +43,9 @@ Every screen has its own URL in the form `/<role>/<section>`. Signed-out visitor
 
 - **Members and memberships:** add, edit, delete, freeze and renew; search, filter and CSV export; status derived from the end date (Active, Expiring Soon, Expired, Frozen).
 - **QR check-in:** each member has a real, scannable QR code on their pass that encodes their member code. Reception checks members in by scanning with a handheld or USB scanner (they type the code and press Enter) or by typing the code. Expired and frozen memberships are blocked and the reason is logged.
-- **Classes and bookings:** capacity limits, double-booking and time-clash checks, a waitlist, and automatic promotion in order when someone cancels.
+- **Trainers:** admins add, edit and delete trainers. A trainer who still has members, classes or workout plans cannot be deleted until those are reassigned, and the team always keeps at least one trainer.
+- **Classes and bookings:** admin and reception create, edit and cancel classes. Trainer and room clashes are rejected, a class cannot be bigger than the gym capacity, and a class with bookings cannot be moved. Members get capacity limits, double-booking and time-clash checks, a waitlist, and automatic promotion in order when someone cancels. Cancelling a class removes its bookings and posts a notification.
+- **Gym capacity:** set in Settings; it limits how large a class can be.
 - **Billing:** record payments, view invoices, track paid, pending and overdue amounts, renew memberships.
 - **Progress and goals:** members log body measurements and track goals, with charts.
 - **Workout programs:** trainers build programs and assign them; members tick off exercises.
@@ -62,7 +64,7 @@ Every screen has its own URL in the form `/<role>/<section>`. Signed-out visitor
 ```
 src/
   api/mockApi.ts        mock REST-style API and pure business rules
-  components/           screens per role area, shared Navbar/UI helpers
+  components/           screens per role area, trainer and class forms, shared Navbar/UI helpers
   lib/schemas.ts        zod validation rules
   tests/                Vitest unit tests
   mockData.ts           seed data and demo accounts
@@ -76,6 +78,9 @@ src/
 - membership status and renewal rules
 - check-in rules (granted, expiring warning, expired, frozen, unknown code)
 - class booking, double-booking, time clash, capacity, waitlist order and promotion
+- trainer rules (add, edit, duplicate names, safe deletion, keeping at least one trainer)
+- class rules (trainer and room clashes, gym capacity, locked times, cancelling a class)
+- gym capacity setting and upgrading older saved data
 - form validation rules
 
 Settings also has a "Business rules checks" panel that runs a few of the same rules inside the app.
@@ -89,5 +94,5 @@ It is a static single-page app. `npm run build` produces `dist/`. `public/_redir
 - No backend or database: data lives in one browser and is lost if storage is cleared (Settings has "reset demo data").
 - Authentication is simulated. A real version needs server-side sessions or tokens and hashed passwords.
 - QR codes are real, but there is no in-browser camera scanner; use a handheld scanner or type the code.
-- Classes and trainers come from seed data and cannot yet be created from the interface. There is no check-out, and payments cannot be exported.
+- There is no check-out or "currently in the gym" count yet, no equipment maintenance log, and payments cannot be exported.
 - No AI features in this version.

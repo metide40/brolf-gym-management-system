@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Activity, AlertTriangle, BadgeCheck, Calendar, Check, CreditCard, Download, Dumbbell, Pencil, Plus, QrCode, RefreshCw, Search, Settings, Trash2, TrendingUp, Users, Wallet, X } from "lucide-react";
-import { PLANS, PLAN_NAMES, TRAINERS, trainerName } from "../mockData";
+import { PLANS, PLAN_NAMES, trainerName } from "../mockData";
 import { firstError, memberFormSchema } from "../lib/schemas";
 import type { Database, Member, MemberInput, PlanName } from "../types";
 import { EmptyState, Modal, Pill, SectionTitle, Stat, btn, btnGhost, btnPrimary, input, panel } from "./Navbar";
@@ -12,6 +12,7 @@ const BRAND = "#d7263d";
 const PLAN_COLOR: Record<string, string> = { Monthly: "#d4d4d8", Quarterly: "#9a9aa3", Annual: "#5f6168", VIP: BRAND };
 const planColor = (name: string) => PLAN_COLOR[name] ?? "#71717a";
 const AXIS = { fontSize: 12, fill: "var(--muted-foreground)" };
+const TOOLTIP_ITEM = { color: "var(--popover-foreground)" };
 const TOOLTIP_STYLE = { borderRadius: 10, border: "1px solid var(--border)", background: "var(--popover)", color: "var(--popover-foreground)", fontSize: 12 };
 const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? "am" : "pm"}`;
 const fmtDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -70,7 +71,7 @@ export function AdminOverview({ db }: { db: Database }) {
                 <CartesianGrid stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="month" tick={AXIS} tickLine={false} axisLine={false} />
                 <YAxis tick={AXIS} tickLine={false} axisLine={false} domain={growthRange} allowDecimals={false} width={36} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => [`${value} members`, "Total"]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={TOOLTIP_ITEM} labelStyle={TOOLTIP_ITEM} formatter={(value) => [value, "Members"]} />
                 <Line type="monotone" dataKey="members" stroke={BRAND} strokeWidth={2.5} dot={{ r: 3, fill: BRAND, strokeWidth: 0 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
@@ -93,7 +94,7 @@ export function AdminOverview({ db }: { db: Database }) {
                     <Cell key={entry.name} fill={planColor(entry.name)} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value, name) => [`${value} members`, name]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={TOOLTIP_ITEM} labelStyle={TOOLTIP_ITEM} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -120,7 +121,7 @@ export function AdminOverview({ db }: { db: Database }) {
                 <CartesianGrid stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="hour" tick={{ ...AXIS, fontSize: 11 }} tickLine={false} axisLine={false} interval={0} />
                 <YAxis tick={AXIS} tickLine={false} axisLine={false} allowDecimals={false} width={30} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "var(--secondary)" }} formatter={(value) => [`${value} check-ins`, "Granted"]} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={TOOLTIP_ITEM} labelStyle={TOOLTIP_ITEM} cursor={{ fill: "var(--secondary)" }} formatter={(value) => [value, "Check-ins granted"]} />
                 <Bar dataKey="visits" radius={[4, 4, 0, 0]} maxBarSize={28}>
                   {hourly.map((h) => (
                     <Cell key={h.hour} fill={peak && h.hour === peak.hour && h.visits > 0 ? BRAND : "#71717a"} fillOpacity={peak && h.hour === peak.hour && h.visits > 0 ? 1 : 0.55} />
@@ -153,7 +154,7 @@ export function AdminOverview({ db }: { db: Database }) {
 }
 
 type FormState = { name: string; email: string; phone: string; plan: PlanName; startDate: string; trainerId: string; goal: string; frozen: boolean };
-const emptyForm = (): FormState => ({ name: "", email: "", phone: "", plan: "Monthly", startDate: new Date().toISOString().slice(0, 10), trainerId: TRAINERS[0].id, goal: "General fitness", frozen: false });
+const emptyForm = (trainerId: string): FormState => ({ name: "", email: "", phone: "", plan: "Monthly", startDate: new Date().toISOString().slice(0, 10), trainerId, goal: "General fitness", frozen: false });
 
 export function MemberDirectory({
   db,
@@ -174,7 +175,7 @@ export function MemberDirectory({
   const [status, setStatus] = useState<string>("All");
   const [editing, setEditing] = useState<Member | null>(null);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<FormState>(emptyForm());
+  const [form, setForm] = useState<FormState>(emptyForm(db.trainers[0]?.id ?? ""));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -185,7 +186,7 @@ export function MemberDirectory({
     return matchQ && (status === "All" || m.status === status);
   });
 
-  const openCreate = () => { setEditing(null); setForm(emptyForm()); setError(""); setOpen(true); };
+  const openCreate = () => { setEditing(null); setForm(emptyForm(db.trainers[0]?.id ?? "")); setError(""); setOpen(true); };
   const openEdit = (m: Member) => {
     setEditing(m);
     setForm({ name: m.name, email: m.email, phone: m.phone, plan: m.plan, startDate: m.startDate, trainerId: m.trainerId, goal: m.goal, frozen: m.frozen });
@@ -224,7 +225,7 @@ export function MemberDirectory({
   };
 
   const exportCsv = () => {
-    const rows = [["ID", "Card", "Name", "Email", "Phone", "Plan", "Status", "Start", "End", "Trainer", "Goal"], ...filtered.map((m) => [m.id, m.code, m.name, m.email, m.phone, m.plan, m.status, m.startDate, m.endDate, trainerName(m.trainerId), m.goal])];
+    const rows = [["ID", "Card", "Name", "Email", "Phone", "Plan", "Status", "Start", "End", "Trainer", "Goal"], ...filtered.map((m) => [m.id, m.code, m.name, m.email, m.phone, m.plan, m.status, m.startDate, m.endDate, trainerName(db.trainers, m.trainerId), m.goal])];
     const csv = rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(",")).join(String.fromCharCode(10));
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
@@ -290,7 +291,7 @@ export function MemberDirectory({
                     <td className="px-3 py-2.5 text-xs font-medium">{m.plan}</td>
                     <td className="px-3 py-2.5"><Pill tone={m.status}>{m.status}</Pill></td>
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">{fmtDate(m.endDate)}</td>
-                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{trainerName(m.trainerId)}</td>
+                    <td className="px-3 py-2.5 text-xs text-muted-foreground">{trainerName(db.trainers, m.trainerId)}</td>
                     <td className="px-3 py-2.5">
                       <div className="flex justify-end gap-1">
                         <button onClick={() => onRenew(m.id, 30)} title="Renew 30 days" className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-primary/12 hover:text-primary"><RefreshCw size={14} /></button>
@@ -321,7 +322,7 @@ export function MemberDirectory({
           <label className="text-xs font-semibold text-muted-foreground">Start date<input type="date" className={`${input} mt-1`} value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></label>
           <label className="text-xs font-semibold text-muted-foreground">Assigned trainer
             <select className={`${input} mt-1`} value={form.trainerId} onChange={(e) => setForm({ ...form, trainerId: e.target.value })}>
-              {TRAINERS.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {db.trainers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </label>
           <label className="text-xs font-semibold text-muted-foreground sm:col-span-2">Primary goal<input className={`${input} mt-1`} value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} /></label>
@@ -454,6 +455,7 @@ export function SettingsView({
             <label className="text-xs font-semibold text-muted-foreground">Open hours<input className={`${input} mt-1`} value={form.openHours} onChange={(e) => setForm({ ...form, openHours: e.target.value })} /></label>
             <label className="text-xs font-semibold text-muted-foreground">Tax rate<input type="number" step="0.01" className={`${input} mt-1`} value={form.taxRate} onChange={(e) => setForm({ ...form, taxRate: Number(e.target.value) })} /></label>
             <label className="text-xs font-semibold text-muted-foreground">Day pass<input type="number" className={`${input} mt-1`} value={form.dayPassPrice} onChange={(e) => setForm({ ...form, dayPassPrice: Number(e.target.value) })} /></label>
+            <label className="text-xs font-semibold text-muted-foreground sm:col-span-2">Gym capacity (people allowed in at once)<input type="number" min={1} className={`${input} mt-1`} value={form.maxCapacity} onChange={(e) => setForm({ ...form, maxCapacity: Number(e.target.value) })} /></label>
           </div>
           <button onClick={save} disabled={saving} className={`${btnPrimary} mt-4`}>{saving ? "Saving..." : "Save settings"}</button>
         </div>

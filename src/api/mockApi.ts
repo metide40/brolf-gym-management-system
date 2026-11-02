@@ -1,5 +1,9 @@
-import { DEMO_ACCOUNTS, deriveStatus, seedDatabase } from "../mockData";
+import { DEMO_ACCOUNTS, SEED_TRAINERS, deriveStatus, seedDatabase } from "../mockData";
+import { classSchema, firstError, maxCapacitySchema, trainerSchema } from "../lib/schemas";
 import type {
+  ClassInput,
+  Trainer,
+  TrainerInput,
   BookingResult,
   CheckInResult,
   Database,
@@ -23,10 +27,18 @@ const delay = (min = 160, max = 340) => new Promise<void>((r) => setTimeout(r, m
 const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 const nowIso = () => new Date().toISOString();
 
+// Fills in fields added after a browser first saved its data, so older saved data keeps working.
+export function migrateDatabase(stored: Partial<Database>): Database {
+  const db = stored as Database;
+  if (!Array.isArray(db.trainers) || db.trainers.length === 0) db.trainers = SEED_TRAINERS.map((t) => ({ ...t }));
+  if (typeof db.settings?.maxCapacity !== "number") db.settings = { ...db.settings, maxCapacity: 120 };
+  return db;
+}
+
 function read(): Database {
   try {
     const raw = localStorage.getItem(DB_KEY);
-    if (raw) return JSON.parse(raw) as Database;
+    if (raw) return migrateDatabase(JSON.parse(raw) as Partial<Database>);
   } catch {
     /* ignore corrupt storage */
   }
@@ -319,9 +331,148 @@ export async function markNotificationsRead(role: Role): Promise<Database> {
   return write(db);
 }
 
+// ---------- Trainers ----------
+
+export function saveTrainerIn(db: Database, input: TrainerInput): Trainer {
+  const problem = firstError(trainerSchema.safeParse(input));
+  if (problem) throw new Error(problem);
+  const clean = { name: input.name.trim(), specialty: input.specialty.trim(), availability: input.availability.trim() };
+  const duplicate = db.trainers.some((t) => t.id !== input.id && t.name.toLowerCase() === clean.name.toLowerCase());
+  if (duplicate) throw new Error("A trainer with this name already exists.");
+
+  if (input.id) {
+    const existing = db.trainers.find((t) => t.id === input.id);
+    if (!existing) throw new Error("Trainer not found.");
+    Object.assign(existing, clean);
+    return existing;
+  }
+  const highest = db.trainers.reduce((max, t) => Math.max(max, Number(t.id.replace(/\D/g, "")) || 0), 0);
+  const created: Trainer = { id: `TR-${String(highest + 1).padStart(2, "0")}`, ...clean };
+  db.trainers.push(created);
+  return created;
+}
+
+export function deleteTrainerIn(db: Database, trainerId: string): void {
+  const trainer = db.trainers.find((t) => t.id === trainerId);
+  if (!trainer) throw new Error("Trainer not found.");
+  if (db.trainers.length <= 1) throw new Error("Keep at least one trainer on the team.");
+
+  const members = db.members.filter((m) => m.trainerId === trainerId).length;
+  const classes = db.classes.filter((c) => c.trainerId === trainerId).length;
+  const plans = db.workoutPlans.filter((p) => p.trainerId === trainerId).length;
+  const parts = [
+    members ? `${members} member${members === 1 ? "" : "s"}` : "",
+    classes ? `${classes} class${classes === 1 ? "" : "es"}` : "",
+    plans ? `${plans} workout plan${plans === 1 ? "" : "s"}` : "",
+  ].filter(Boolean);
+  if (parts.length) throw new Error(`${trainer.name} is still assigned to ${parts.join(", ")}. Reassign them first.`);
+
+  db.trainers = db.trainers.filter((t) => t.id !== trainerId);
+}
+
+export async function saveTrainer(input: TrainerInput): Promise<Database> {
+  await delay();
+  const db = read();
+  saveTrainerIn(db, input);
+  return write(db);
+}
+
+export async function deleteTrainer(trainerId: string): Promise<Database> {
+  await delay();
+  const db = read();
+  deleteTrainerIn(db, trainerId);
+  return write(db);
+}
+
+// ---------- Classes ----------
+
+// Returns the first problem with a class, or null when it can be saved.
+export function validateClassIn(db: Database, input: ClassInput): string | null {
+  const basic = firstError(classSchema.safeParse(input));
+  if (basic) return basic;
+  const trainer = db.trainers.find((t) => t.id === input.trainerId);
+  if (!trainer) return "Choose a trainer from the list.";
+  if (input.capacity > db.settings.maxCapacity) return `Class capacity cannot exceed the gym limit of ${db.settings.maxCapacity}.`;
+
+  const candidate = { ...input, id: input.id ?? "NEW-CLASS" } as FitnessClass;
+  const others = db.classes.filter((c) => c.id !== input.id);
+  const trainerClash = others.find((c) => c.trainerId === input.trainerId && overlaps(c, candidate));
+  if (trainerClash) return `${trainer.name} already teaches ${trainerClash.name} at ${trainerClash.time} on ${trainerClash.day}.`;
+  const roomClash = others.find((c) => c.room.toLowerCase() === input.room.trim().toLowerCase() && overlaps(c, candidate));
+  if (roomClash) return `${roomClash.room} is already used by ${roomClash.name} at ${roomClash.time} on ${roomClash.day}.`;
+
+  if (input.id) {
+    const existing = db.classes.find((c) => c.id === input.id);
+    if (!existing) return "Class not found.";
+    const booked = db.bookings.filter((b) => b.classId === input.id).length;
+    if (input.capacity < booked) return `${booked} members are already booked. Capacity cannot be lower than that.`;
+    const rescheduled = existing.day !== input.day || existing.time !== input.time || existing.duration !== input.duration;
+    if (rescheduled && booked > 0) return "Members are already booked, so the time cannot change. Cancel the class and create a new one instead.";
+  }
+  return null;
+}
+
+export function saveClassIn(db: Database, input: ClassInput): FitnessClass {
+  const problem = validateClassIn(db, input);
+  if (problem) throw new Error(problem);
+  const clean = { name: input.name.trim(), category: input.category.trim(), trainerId: input.trainerId, day: input.day, time: input.time, duration: input.duration, capacity: input.capacity, room: input.room.trim() };
+  if (input.id) {
+    const existing = db.classes.find((c) => c.id === input.id)!;
+    Object.assign(existing, clean);
+    return existing;
+  }
+  const created: FitnessClass = { id: uid("CLS"), ...clean };
+  db.classes.push(created);
+  return created;
+}
+
+export function cancelClassIn(db: Database, classId: string): { ok: boolean; message: string; removedBookings: number } {
+  const cls = db.classes.find((c) => c.id === classId);
+  if (!cls) return { ok: false, message: "Class not found.", removedBookings: 0 };
+  const removedBookings = db.bookings.filter((b) => b.classId === classId).length;
+  db.classes = db.classes.filter((c) => c.id !== classId);
+  db.bookings = db.bookings.filter((b) => b.classId !== classId);
+  db.waitlist = db.waitlist.filter((w) => w.classId !== classId);
+  db.notifications.unshift({
+    id: uid("NT"),
+    title: "Class cancelled",
+    body: `${cls.name} on ${cls.day} at ${cls.time} was cancelled. ${removedBookings} booking${removedBookings === 1 ? "" : "s"} removed.`,
+    at: nowIso(),
+    read: false,
+    audience: "all",
+  });
+  return { ok: true, message: `${cls.name} cancelled. ${removedBookings} booking${removedBookings === 1 ? "" : "s"} removed.`, removedBookings };
+}
+
+export async function saveClass(input: ClassInput): Promise<Database> {
+  await delay();
+  const db = read();
+  saveClassIn(db, input);
+  return write(db);
+}
+
+export async function cancelClass(classId: string): Promise<{ ok: boolean; message: string; db: Database }> {
+  await delay();
+  const db = read();
+  const result = cancelClassIn(db, classId);
+  return { ok: result.ok, message: result.message, db: write(db) };
+}
+
+// ---------- Settings ----------
+
+export function validateSettingsIn(db: Database, settings: GymSettings): string | null {
+  const problem = firstError(maxCapacitySchema.safeParse(settings.maxCapacity));
+  if (problem) return problem;
+  const biggest = db.classes.reduce((max, c) => Math.max(max, c.capacity), 0);
+  if (settings.maxCapacity < biggest) return `Gym capacity cannot be lower than your biggest class (${biggest} seats).`;
+  return null;
+}
+
 export async function updateSettings(settings: GymSettings): Promise<Database> {
   await delay();
   const db = read();
+  const problem = validateSettingsIn(db, settings);
+  if (problem) throw new Error(problem);
   db.settings = settings;
   return write(db);
 }

@@ -4,7 +4,7 @@ import { firstError, measurementSchema } from "../lib/schemas";
 import { motion } from "framer-motion";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Activity, Calendar, Check, ClipboardList, Clock, Dumbbell, Plus, Target, Trash2, TrendingUp, Users } from "lucide-react";
-import { PLANS, TRAINERS, trainerName } from "../mockData";
+import { PLANS, trainerName } from "../mockData";
 import type { BodyMeasurement, Database, Exercise, FitnessGoal, Member, WorkoutPlan } from "../types";
 import { EmptyState, Modal, Pill, SectionTitle, Stat, btn, btnGhost, btnPrimary, input, panel } from "./Navbar";
 
@@ -18,7 +18,7 @@ export function TrainerView({ db, trainerId, onSavePlan, onCheckIn }: { db: Data
   const roster = db.members.filter((m) => m.trainerId === trainerId);
   const classes = db.classes.filter((c) => c.trainerId === trainerId);
   const myPlans = db.workoutPlans.filter((p) => p.trainerId === trainerId);
-  const trainer = TRAINERS.find((t) => t.id === trainerId) ?? TRAINERS[0];
+  const trainer = db.trainers.find((t) => t.id === trainerId) ?? db.trainers[0];
 
   const [target, setTarget] = useState<Member | null>(null);
   const [title, setTitle] = useState("");
@@ -169,7 +169,7 @@ export function MemberPass({ db, memberId, onRenew }: { db: Database; memberId: 
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
               <span className="text-muted-foreground">Plan<p className="font-display text-base font-bold text-foreground">{member.plan}</p></span>
               <span className="text-muted-foreground">Expires<p className="font-display text-base font-bold text-foreground">{fmt(member.endDate)}</p></span>
-              <span className="text-muted-foreground">Coach<p className="font-semibold text-foreground">{trainerName(member.trainerId)}</p></span>
+              <span className="text-muted-foreground">Coach<p className="font-semibold text-foreground">{trainerName(db.trainers, member.trainerId)}</p></span>
               <span className="text-muted-foreground">Days left<p className={`font-semibold ${left <= 14 ? "text-amber-500" : "text-foreground"}`}>{left > 0 ? `${left} days` : "Expired"}</p></span>
             </div>
             <div className="shrink-0 rounded-lg bg-white p-3">
@@ -240,7 +240,7 @@ export function MemberClasses({
                 </div>
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{c.category}</span>
               </div>
-              <p className="mt-1.5 text-[11px] text-muted-foreground">Coach {trainerName(c.trainerId)} - {c.duration} min</p>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">Coach {trainerName(db.trainers, c.trainerId)} - {c.duration} min</p>
               <div className="mt-3">
                 <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
                   <div className={`h-full rounded-full ${pct >= 100 ? "bg-rose-500" : pct > 70 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} />
@@ -281,7 +281,7 @@ export function MemberWorkouts({ db, memberId, onToggleExercise }: { db: Databas
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-display text-base font-bold">{p.title}</p>
-                  <p className="text-[11px] text-muted-foreground">{p.focus} - {trainerName(p.trainerId)}</p>
+                  <p className="text-[11px] text-muted-foreground">{p.focus} - {trainerName(db.trainers, p.trainerId)}</p>
                 </div>
                 <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[11px] font-bold text-primary">{done}/{p.exercises.length}</span>
               </div>
@@ -361,7 +361,7 @@ export function MemberProgress({
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border" vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="currentColor" className="text-muted-foreground" tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontSize: 11 }} stroke="currentColor" className="text-muted-foreground" tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--popover)", color: "var(--popover-foreground)", fontSize: 12 }} />
+                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--popover)", color: "var(--popover-foreground)", fontSize: 12 }} itemStyle={{ color: "var(--popover-foreground)" }} labelStyle={{ color: "var(--popover-foreground)" }} />
                 <Line type="monotone" dataKey="weight" stroke="#d7263d" strokeWidth={2.5} dot={{ r: 3, fill: "#d7263d", strokeWidth: 0 }} />
                 <Line type="monotone" dataKey="fat" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>

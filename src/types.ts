@@ -29,6 +29,17 @@ export interface Member {
   notes: string;
 }
 
+export interface Trainer {
+  id: string;
+  name: string;
+  specialty: string;
+  availability: string;
+}
+
+export type TrainerInput = Omit<Trainer, "id"> & { id?: string };
+
+export type ClassInput = Omit<FitnessClass, "id"> & { id?: string };
+
 export interface FitnessClass {
   id: string;
   name: string;
@@ -144,10 +155,12 @@ export interface GymSettings {
   taxRate: number;
   openHours: string;
   dayPassPrice: number;
+  maxCapacity: number;
 }
 
 export interface Database {
   members: Member[];
+  trainers: Trainer[];
   classes: FitnessClass[];
   bookings: Booking[];
   waitlist: WaitlistEntry[];

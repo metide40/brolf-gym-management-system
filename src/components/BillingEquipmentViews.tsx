@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Check, CreditCard, Plus, Printer, Search, Wallet, Wrench } from "lucide-react";
+import { Check, CreditCard, Pencil, Plus, Printer, Search, Trash2, Wallet, Wrench } from "lucide-react";
 import { PLANS, PLAN_NAMES, trainerName } from "../mockData";
-import type { Database, GymSettings, Member, PaymentRecord, PaymentStatus, PlanName } from "../types";
+import type { ClassInput, Database, FitnessClass, GymSettings, Member, PaymentRecord, PaymentStatus, PlanName } from "../types";
 import { firstError, paymentSchema } from "../lib/schemas";
+import { ClassFormModal } from "./ClassFormModal";
 import { EmptyState, Modal, Pill, SectionTitle, Stat, btn, btnGhost, btnPrimary, input, panel } from "./Navbar";
 
 const fmtDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -239,14 +240,23 @@ export function ClassesBoard({
   onBook,
   onCancel,
   onCheckIn,
+  canManage,
+  onSaveClass,
+  onCancelClass,
 }: {
   db: Database;
   onBook: (classId: string, memberId: string) => Promise<{ ok: boolean; message: string }>;
   onCancel: (bookingId: string) => Promise<{ ok: boolean; message: string }>;
   onCheckIn: (code: string) => Promise<{ ok: boolean; message: string }>;
+  canManage: boolean;
+  onSaveClass: (value: ClassInput) => Promise<boolean>;
+  onCancelClass: (classId: string) => Promise<boolean>;
 }) {
   const [memberId, setMemberId] = useState(db.members[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingClass, setEditingClass] = useState<FitnessClass | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const member: Member | undefined = db.members.find((m) => m.id === memberId);
 
   const act = async (fn: () => Promise<unknown>) => {
@@ -256,7 +266,11 @@ export function ClassesBoard({
 
   return (
     <div className="space-y-4">
-      <SectionTitle title="Class schedule board" sub="Book members in, release seats, or verify attendance" />
+      <SectionTitle
+        title="Class schedule board"
+        sub="Book members in, release seats, or verify attendance"
+        right={canManage ? <button onClick={() => { setEditingClass(null); setFormOpen(true); }} className={btnPrimary}><Plus size={15} /> New class</button> : undefined}
+      />
       <div className={`${panel} flex flex-wrap items-end gap-3 p-3`}>
         <label className="min-w-[220px] flex-1 text-xs font-semibold text-muted-foreground">Booking for
           <select className={`${input} mt-1`} value={memberId} onChange={(e) => setMemberId(e.target.value)}>
@@ -284,7 +298,7 @@ export function ClassesBoard({
                 </div>
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{c.category}</span>
               </div>
-              <p className="mt-1.5 text-[11px] text-muted-foreground">{trainerName(c.trainerId)} - {c.duration} min</p>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">{trainerName(db.trainers, c.trainerId)} - {c.duration} min</p>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
                 <div className={`h-full rounded-full ${pct >= 100 ? "bg-rose-500" : pct > 70 ? "bg-amber-500" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} />
               </div>
@@ -296,10 +310,25 @@ export function ClassesBoard({
                   <button onClick={() => act(() => onBook(c.id, memberId))} disabled={busy || !memberId} className={`${full ? `${btn} bg-amber-500/15 text-amber-500` : btnPrimary} flex-1 text-xs`}>{full ? "Join waitlist" : "Book seat"}</button>
                 )}
               </div>
+              {canManage ? (
+                <div className="mt-2 flex flex-wrap gap-2 border-t border-border pt-3">
+                  <button onClick={() => { setEditingClass(c); setFormOpen(true); }} className={`${btnGhost} text-xs`}><Pencil size={13} /> Edit</button>
+                  {confirmCancelId === c.id ? (
+                    <>
+                      <button onClick={() => act(async () => { await onCancelClass(c.id); setConfirmCancelId(null); })} disabled={busy} className={`${btn} border border-rose-400 text-xs text-rose-500`}>Yes, cancel class</button>
+                      <button onClick={() => setConfirmCancelId(null)} className={`${btnGhost} text-xs`}>Keep</button>
+                    </>
+                  ) : (
+                    <button onClick={() => setConfirmCancelId(c.id)} className={`${btn} border border-border text-xs text-muted-foreground hover:border-rose-400 hover:text-rose-500`}><Trash2 size={13} /> Cancel class</button>
+                  )}
+                </div>
+              ) : null}
             </div>
           );
         })}
       </div>
+
+      {formOpen ? <ClassFormModal db={db} initial={editingClass} onClose={() => setFormOpen(false)} onSave={onSaveClass} /> : null}
     </div>
   );
 }

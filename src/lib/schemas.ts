@@ -38,6 +38,27 @@ export const measurementSchema = z.object({
   arms: z.number({ message: "Enter arm size." }).min(10, "Arms must be between 10 and 100 cm.").max(100, "Arms must be between 10 and 100 cm."),
 });
 
+export const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
+
+export const trainerSchema = z.object({
+  name: z.string().trim().min(2, "Enter the trainer's full name.").max(60, "Name must be 60 characters or fewer."),
+  specialty: z.string().trim().min(2, "Enter a specialty.").max(60, "Specialty must be 60 characters or fewer."),
+  availability: z.string().trim().max(80, "Availability must be 80 characters or fewer."),
+});
+
+export const classSchema = z.object({
+  name: z.string().trim().min(2, "Enter a class name.").max(60, "Class name must be 60 characters or fewer."),
+  category: z.string().trim().min(2, "Enter a category.").max(30, "Category must be 30 characters or fewer."),
+  trainerId: z.string().min(1, "Choose a trainer."),
+  day: z.enum(DAYS, { message: "Choose a day." }),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Enter a start time such as 06:30."),
+  duration: z.number({ message: "Enter a duration." }).int("Duration must be a whole number of minutes.").min(15, "Classes must be at least 15 minutes.").max(180, "Classes can be at most 180 minutes."),
+  capacity: z.number({ message: "Enter a capacity." }).int("Capacity must be a whole number.").min(1, "Capacity must be at least 1.").max(500, "Capacity is too large."),
+  room: z.string().trim().min(1, "Enter a room.").max(40, "Room must be 40 characters or fewer."),
+});
+
+export const maxCapacitySchema = z.number({ message: "Enter the gym capacity." }).int("Gym capacity must be a whole number.").min(1, "Gym capacity must be at least 1.").max(5000, "Gym capacity is too large.");
+
 export function firstError(result: { success: boolean; error?: { issues: { message: string }[] } }): string | null {
   if (result.success) return null;
   return result.error?.issues[0]?.message ?? "Check the form and try again.";
