@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Check, CreditCard, Pencil, Plus, Printer, Search, Trash2, Wallet, Wrench } from "lucide-react";
+import { Check, ChevronDown, CreditCard, Download, History, NotebookPen, Pencil, Plus, Printer, Search, Trash2, Wallet, Wrench } from "lucide-react";
 import { PLANS, PLAN_NAMES, trainerName } from "../mockData";
-import type { ClassInput, Database, FitnessClass, GymSettings, Member, PaymentRecord, PaymentStatus, PlanName } from "../types";
+import type { ClassInput, Database, EquipmentItem, FitnessClass, GymSettings, MaintenanceInput, Member, PaymentRecord, PaymentStatus, PlanName } from "../types";
 import { firstError, paymentSchema } from "../lib/schemas";
 import { ClassFormModal } from "./ClassFormModal";
+import { MaintenanceModal } from "./MaintenanceModal";
+import { downloadCsv } from "../lib/csv";
 import { EmptyState, Modal, Pill, SectionTitle, Stat, btn, btnGhost, btnPrimary, input, panel } from "./Navbar";
 
 const fmtDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -22,14 +24,14 @@ export function InvoiceModal({ open, onClose, payment, settings }: { open: boole
                 <p className="text-[11px] text-muted-foreground">{settings.phone}</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">Invoice</p>
+                <p className="text-[10px] font-bold text-muted-foreground">Invoice</p>
                 <p className="font-display text-sm font-bold">{payment.invoiceNo}</p>
                 <p className="text-[11px] text-muted-foreground">{fmtDate(payment.date)}</p>
               </div>
             </div>
             <div className="mt-4 flex items-start justify-between gap-3 border-t border-border/60 pt-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Billed to</p>
+                <p className="text-[10px] font-bold text-muted-foreground">Billed to</p>
                 <p className="text-sm font-semibold">{payment.memberName}</p>
                 <p className="text-[11px] text-muted-foreground">{payment.memberId}</p>
               </div>
@@ -37,7 +39,7 @@ export function InvoiceModal({ open, onClose, payment, settings }: { open: boole
             </div>
             <table className="mt-4 w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-border/60 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border/60 text-[10px] text-muted-foreground">
                   <th className="py-1.5 font-semibold">Description</th>
                   <th className="py-1.5 text-right font-semibold">Amount</th>
                 </tr>
@@ -54,7 +56,7 @@ export function InvoiceModal({ open, onClose, payment, settings }: { open: boole
               </tbody>
             </table>
             <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total due</span>
+              <span className="text-xs font-semibold text-muted-foreground">Total due</span>
               <span className="font-display text-xl font-extrabold tabular-nums">${(payment.amount + tax).toFixed(2)}</span>
             </div>
             <p className="mt-3 text-[11px] text-muted-foreground">Paid via {payment.method}. Thank you for training with us.</p>
@@ -94,6 +96,13 @@ export function PaymentsView({
     return (!q || [p.memberName, p.invoiceNo, p.memberId].some((v) => v.toLowerCase().includes(q))) && (status === "All" || p.status === status);
   });
 
+  const exportCsv = () => {
+    downloadCsv("fitcore-payments.csv", [
+      ["Invoice", "Date", "Member ID", "Member", "Plan", "Amount", "Method", "Status"],
+      ...filtered.map((p) => [p.invoiceNo, p.date, p.memberId, p.memberName, p.plan, p.amount, p.method, p.status]),
+    ]);
+  };
+
   const submit = async () => {
     const payload = { ...form, amount: PLANS[form.plan].price };
     const problem = firstError(paymentSchema.safeParse(payload));
@@ -112,7 +121,12 @@ export function PaymentsView({
 
   return (
     <div className="space-y-4">
-      <SectionTitle title="Billing and invoices" sub="Track dues, log payments, print receipts" right={<button onClick={() => { setOpen(true); setError(""); }} className={btnPrimary}><Plus size={15} /> Log payment</button>} />
+      <SectionTitle title="Billing and invoices" sub="Track dues, log payments, print receipts" right={
+          <div className="flex flex-wrap gap-2">
+            <button onClick={exportCsv} disabled={filtered.length === 0} className={btnGhost}><Download size={15} /> Export CSV</button>
+            <button onClick={() => { setOpen(true); setError(""); }} className={btnPrimary}><Plus size={15} /> Log payment</button>
+          </div>
+        } />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Collected" value={`$${collected.toLocaleString()}`} hint={`${db.payments.filter((p) => p.status === "Paid").length} paid invoices`} icon={Wallet} tone="emerald" />
@@ -137,7 +151,7 @@ export function PaymentsView({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead>
-                <tr className="border-b border-border/70 text-[11px] uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border/70 text-[11px] text-muted-foreground">
                   <th className="px-4 py-2.5 font-semibold">Invoice</th>
                   <th className="px-3 py-2.5 font-semibold">Member</th>
                   <th className="px-3 py-2.5 font-semibold">Plan</th>
@@ -206,11 +220,22 @@ export function PaymentsView({
   );
 }
 
-export function EquipmentView({ db, onCycle }: { db: Database; onCycle: (id: string) => Promise<void> }) {
+export function EquipmentView({
+  db,
+  onCycle,
+  onLog,
+}: {
+  db: Database;
+  onCycle: (id: string) => Promise<void>;
+  onLog: (id: string, value: MaintenanceInput) => Promise<boolean>;
+}) {
   const groups = ["Operational", "Needs Service", "Out of Order"];
+  const [logging, setLogging] = useState<EquipmentItem | null>(null);
+  const [openHistory, setOpenHistory] = useState<string | null>(null);
+
   return (
     <div className="space-y-4">
-      <SectionTitle title="Equipment and facilities" sub="Tap a unit to advance its maintenance status" />
+      <SectionTitle title="Equipment and facilities" sub="Advance a unit's status, or log the maintenance work done on it" />
       <div className="grid gap-3 sm:grid-cols-3">
         {groups.map((g, i) => (
           <Stat key={g} label={g} value={db.equipment.filter((e) => e.status === g).length} hint={`${db.equipment.length} tracked units`} icon={Wrench} tone={i === 0 ? "emerald" : i === 1 ? "amber" : "rose"} />
@@ -218,19 +243,39 @@ export function EquipmentView({ db, onCycle }: { db: Database; onCycle: (id: str
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {db.equipment.map((e) => (
-          <button key={e.id} onClick={() => onCycle(e.id)} className={`${panel} p-4 text-left transition hover:border-primary/40`}>
+          <div key={e.id} className={`${panel} flex flex-col p-4`}>
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0">
                 <p className="font-display text-sm font-bold">{e.name}</p>
                 <p className="text-[11px] text-muted-foreground">{e.category} - serviced {fmtDate(e.lastService)}</p>
               </div>
               <Pill tone={e.status}>{e.status}</Pill>
             </div>
             <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{e.note || "No open maintenance notes."}</p>
-            <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-primary"><Check size={11} /> Advance status</p>
-          </button>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={() => onCycle(e.id)} className={`${btnGhost} text-xs`}><Check size={13} /> Advance status</button>
+              <button onClick={() => setLogging(e)} className={`${btnGhost} text-xs`}><NotebookPen size={13} /> Log maintenance</button>
+              <button onClick={() => setOpenHistory(openHistory === e.id ? null : e.id)} className={`${btnGhost} text-xs`} aria-expanded={openHistory === e.id}>
+                <History size={13} /> History ({e.log.length}) <ChevronDown size={13} className={openHistory === e.id ? "rotate-180" : ""} />
+              </button>
+            </div>
+
+            {openHistory === e.id ? (
+              <ul className="mt-3 space-y-2 border-t border-border pt-3">
+                {e.log.length === 0 ? <li className="text-[11px] text-muted-foreground">No maintenance logged yet.</li> : null}
+                {e.log.slice(0, 6).map((entry) => (
+                  <li key={entry.id} className="text-[11px] leading-snug">
+                    <span className="font-semibold text-foreground">{fmtDate(entry.date)}</span>
+                    <span className="text-muted-foreground"> - {entry.status}. {entry.note}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         ))}
       </div>
+      {logging ? <MaintenanceModal item={logging} onClose={() => setLogging(null)} onSave={(value) => onLog(logging.id, value)} /> : null}
     </div>
   );
 }
@@ -296,7 +341,7 @@ export function ClassesBoard({
                   <p className="font-display text-sm font-bold">{c.name}</p>
                   <p className="text-[11px] text-muted-foreground">{c.day} {c.time} - {c.room}</p>
                 </div>
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{c.category}</span>
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">{c.category}</span>
               </div>
               <p className="mt-1.5 text-[11px] text-muted-foreground">{trainerName(db.trainers, c.trainerId)} - {c.duration} min</p>
               <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">

@@ -59,6 +59,12 @@ export const classSchema = z.object({
 
 export const maxCapacitySchema = z.number({ message: "Enter the gym capacity." }).int("Gym capacity must be a whole number.").min(1, "Gym capacity must be at least 1.").max(5000, "Gym capacity is too large.");
 
+export const maintenanceSchema = z.object({
+  date: isoDate,
+  note: z.string().trim().min(3, "Describe the work in at least a few words.").max(200, "Keep the note under 200 characters."),
+  status: z.enum(["Operational", "Needs Service", "Out of Order"], { message: "Choose the equipment status." }),
+});
+
 export function firstError(result: { success: boolean; error?: { issues: { message: string }[] } }): string | null {
   if (result.success) return null;
   return result.error?.issues[0]?.message ?? "Check the form and try again.";

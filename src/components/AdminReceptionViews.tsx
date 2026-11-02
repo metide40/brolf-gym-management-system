@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Activity, AlertTriangle, BadgeCheck, Calendar, Check, CreditCard, Download, Dumbbell, Pencil, Plus, QrCode, RefreshCw, Search, Settings, Trash2, TrendingUp, Users, Wallet, X } from "lucide-react";
+import { Activity, AlertTriangle, BadgeCheck, Calendar, Check, CreditCard, Download, Dumbbell, LogOut, Pencil, Plus, QrCode, RefreshCw, Search, Settings, Trash2, TrendingUp, Users, Wallet, X } from "lucide-react";
 import { PLANS, PLAN_NAMES, trainerName } from "../mockData";
 import { firstError, memberFormSchema } from "../lib/schemas";
+import { downloadCsv } from "../lib/csv";
+import { STAY_WINDOW_MS, currentlyInGym } from "../api/mockApi";
 import type { Database, Member, MemberInput, PlanName } from "../types";
 import { EmptyState, Modal, Pill, SectionTitle, Stat, btn, btnGhost, btnPrimary, input, panel } from "./Navbar";
 
@@ -58,7 +60,7 @@ export function AdminOverview({ db }: { db: Database }) {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Total members" value={db.members.length} hint={`${active} active right now`} icon={Users} tone="neutral" />
         <Stat label="Monthly revenue" value={`$${revenue.toLocaleString()}`} hint={`$${overdue.toLocaleString()} overdue`} icon={Wallet} tone="neutral" />
-        <Stat label="Check-ins today" value={todayVisits} hint={`${db.attendance.filter((a) => a.result === "Blocked").length} blocked entries`} icon={Activity} tone="neutral" />
+        <Stat label="Check-ins today" value={todayVisits} hint={`${currentlyInGym(db).length} in the gym now, ${db.attendance.filter((a) => a.result === "Blocked").length} blocked`} icon={Activity} tone="neutral" />
         <Stat label="Expiring in 14 days" value={expiring.length} hint="Renewal reminders queued" icon={AlertTriangle} tone="amber" />
       </div>
 
@@ -225,14 +227,10 @@ export function MemberDirectory({
   };
 
   const exportCsv = () => {
-    const rows = [["ID", "Card", "Name", "Email", "Phone", "Plan", "Status", "Start", "End", "Trainer", "Goal"], ...filtered.map((m) => [m.id, m.code, m.name, m.email, m.phone, m.plan, m.status, m.startDate, m.endDate, trainerName(db.trainers, m.trainerId), m.goal])];
-    const csv = rows.map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(",")).join(String.fromCharCode(10));
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "fitcore-members.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadCsv("fitcore-members.csv", [
+      ["ID", "Card", "Name", "Email", "Phone", "Plan", "Status", "Start", "End", "Trainer", "Goal"],
+      ...filtered.map((m) => [m.id, m.code, m.name, m.email, m.phone, m.plan, m.status, m.startDate, m.endDate, trainerName(db.trainers, m.trainerId), m.goal]),
+    ]);
   };
 
   return (
@@ -267,7 +265,7 @@ export function MemberDirectory({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
-                <tr className="border-b border-border/70 text-[11px] uppercase tracking-wide text-muted-foreground">
+                <tr className="border-b border-border/70 text-[11px] text-muted-foreground">
                   <th className="px-4 py-2.5 font-semibold">Member</th>
                   <th className="px-3 py-2.5 font-semibold">Plan</th>
                   <th className="px-3 py-2.5 font-semibold">Status</th>
@@ -340,13 +338,22 @@ export function MemberDirectory({
   );
 }
 
-export function ReceptionTerminal({ db, onCheckIn }: { db: Database; onCheckIn: (code: string) => Promise<{ ok: boolean; message: string }> }) {
+export function ReceptionTerminal({
+  db,
+  onCheckIn,
+  onCheckOut,
+}: {
+  db: Database;
+  onCheckIn: (code: string) => Promise<{ ok: boolean; message: string }>;
+  onCheckOut: (code: string) => Promise<{ ok: boolean; message: string }>;
+}) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const valid = db.members.find((m) => m.status === "Active" || m.status === "Expiring Soon");
   const blocked = db.members.find((m) => m.status === "Expired" || m.status === "Frozen");
   const today = db.attendance.slice(0, 10);
+  const inside = currentlyInGym(db);
 
   const scan = async (value: string) => {
     if (!value.trim()) { setResult({ ok: false, message: "Enter a card code or member ID first." }); return; }
@@ -355,6 +362,19 @@ export function ReceptionTerminal({ db, onCheckIn }: { db: Database; onCheckIn: 
       setResult(await onCheckIn(value));
     } catch (e) {
       setResult({ ok: false, message: e instanceof Error ? e.message : "Scanner error." });
+    } finally {
+      setBusy(false);
+      setCode("");
+    }
+  };
+
+  const leave = async (value: string) => {
+    if (!value.trim()) { setResult({ ok: false, message: "Enter a card code or member ID first." }); return; }
+    setBusy(true);
+    try {
+      setResult(await onCheckOut(value));
+    } catch (e) {
+      setResult({ ok: false, message: e instanceof Error ? e.message : "Check-out failed." });
     } finally {
       setBusy(false);
       setCode("");
@@ -379,6 +399,7 @@ export function ReceptionTerminal({ db, onCheckIn }: { db: Database; onCheckIn: 
           <div className="mt-4 flex gap-2">
             <input autoFocus value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") scan(code); }} placeholder="Member code, for example FC-2001" className={input} />
             <button onClick={() => scan(code)} disabled={busy} className={btnPrimary}>{busy ? "Checking" : "Check in"}</button>
+            <button onClick={() => leave(code)} disabled={busy} className={btnGhost}>Check out</button>
           </div>
 
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -413,10 +434,34 @@ export function ReceptionTerminal({ db, onCheckIn }: { db: Database; onCheckIn: 
           </div>
         </div>
       </div>
+
+      <div className={`${panel} p-4`}>
+        <SectionTitle
+          title="In the gym now"
+          sub={`${inside.length} of ${db.settings.maxCapacity} allowed. A member counts as inside for up to ${STAY_WINDOW_MS / 3600000} hours unless checked out.`}
+        />
+        {inside.length === 0 ? (
+          <EmptyState title="Nobody is checked in" sub="Members appear here after they check in." icon={Users} />
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {inside.map((v) => {
+              const member = db.members.find((m) => m.id === v.memberId);
+              return (
+                <li key={v.memberId} className="flex items-center justify-between gap-2 rounded-xl border border-border/50 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{v.memberName}</p>
+                    <p className="text-[11px] text-muted-foreground">Since {new Date(v.since).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+                  </div>
+                  <button onClick={() => leave(member?.code ?? v.memberId)} disabled={busy} className={`${btnGhost} shrink-0 text-xs`}><LogOut size={13} /> Check out</button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
-
 export function SettingsView({
   db,
   onSave,

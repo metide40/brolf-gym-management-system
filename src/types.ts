@@ -130,6 +130,15 @@ export interface FitnessGoal {
   deadline: string;
 }
 
+export interface MaintenanceEntry {
+  id: string;
+  date: string;
+  note: string;
+  status: EquipmentStatus;
+}
+
+export type MaintenanceInput = Omit<MaintenanceEntry, "id">;
+
 export interface EquipmentItem {
   id: string;
   name: string;
@@ -137,6 +146,20 @@ export interface EquipmentItem {
   status: EquipmentStatus;
   lastService: string;
   note: string;
+  log: MaintenanceEntry[];
+}
+
+export interface Checkout {
+  id: string;
+  memberId: string;
+  memberName: string;
+  at: string;
+}
+
+export interface GymVisitor {
+  memberId: string;
+  memberName: string;
+  since: string;
 }
 
 export interface AppNotification {
@@ -161,6 +184,7 @@ export interface GymSettings {
 export interface Database {
   members: Member[];
   trainers: Trainer[];
+  checkouts: Checkout[];
   classes: FitnessClass[];
   bookings: Booking[];
   waitlist: WaitlistEntry[];

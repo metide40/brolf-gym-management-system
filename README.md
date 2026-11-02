@@ -42,15 +42,16 @@ Every screen has its own URL in the form `/<role>/<section>`. Signed-out visitor
 ## Features
 
 - **Members and memberships:** add, edit, delete, freeze and renew; search, filter and CSV export; status derived from the end date (Active, Expiring Soon, Expired, Frozen).
+- **Check-out and who is inside:** reception can check members out from the terminal or from the "In the gym now" list. A member counts as inside for up to three hours after checking in unless they are checked out. When the gym reaches its capacity limit, new check-ins are blocked and the reason is logged.
 - **QR check-in:** each member has a real, scannable QR code on their pass that encodes their member code. Reception checks members in by scanning with a handheld or USB scanner (they type the code and press Enter) or by typing the code. Expired and frozen memberships are blocked and the reason is logged.
 - **Trainers:** admins add, edit and delete trainers. A trainer who still has members, classes or workout plans cannot be deleted until those are reassigned, and the team always keeps at least one trainer.
 - **Classes and bookings:** admin and reception create, edit and cancel classes. Trainer and room clashes are rejected, a class cannot be bigger than the gym capacity, and a class with bookings cannot be moved. Members get capacity limits, double-booking and time-clash checks, a waitlist, and automatic promotion in order when someone cancels. Cancelling a class removes its bookings and posts a notification.
 - **Gym capacity:** set in Settings; it limits how large a class can be.
-- **Billing:** record payments, view invoices, track paid, pending and overdue amounts, renew memberships.
+- **Billing:** record payments, view invoices, track paid, pending and overdue amounts, renew memberships, and export the payments list to CSV. CSV exports neutralise cells that spreadsheets could run as formulas.
 - **Progress and goals:** members log body measurements and track goals, with charts.
 - **Workout programs:** trainers build programs and assign them; members tick off exercises.
 - **Notifications:** in-app notification centre with unread count.
-- **Equipment:** status tracking across operational, needs service and out of order.
+- **Equipment:** status tracking across operational, needs service and out of order, with a maintenance log (date, note and resulting status) and history for each unit.
 - **Dashboard:** member growth, plan mix, attendance by hour with the busiest hour highlighted, renewals due.
 
 ## How it is built
@@ -66,6 +67,7 @@ src/
   api/mockApi.ts        mock REST-style API and pure business rules
   components/           screens per role area, trainer and class forms, shared Navbar/UI helpers
   lib/schemas.ts        zod validation rules
+  lib/csv.ts            CSV export helper
   tests/                Vitest unit tests
   mockData.ts           seed data and demo accounts
   types.ts              shared types
@@ -80,7 +82,8 @@ src/
 - class booking, double-booking, time clash, capacity, waitlist order and promotion
 - trainer rules (add, edit, duplicate names, safe deletion, keeping at least one trainer)
 - class rules (trainer and room clashes, gym capacity, locked times, cancelling a class)
-- gym capacity setting and upgrading older saved data
+- gym capacity setting, check-out, who is currently inside, and blocking entry at capacity
+- equipment maintenance log, CSV export, and upgrading older saved data
 - form validation rules
 
 Settings also has a "Business rules checks" panel that runs a few of the same rules inside the app.
@@ -94,5 +97,5 @@ It is a static single-page app. `npm run build` produces `dist/`. `public/_redir
 - No backend or database: data lives in one browser and is lost if storage is cleared (Settings has "reset demo data").
 - Authentication is simulated. A real version needs server-side sessions or tokens and hashed passwords.
 - QR codes are real, but there is no in-browser camera scanner; use a handheld scanner or type the code.
-- There is no check-out or "currently in the gym" count yet, no equipment maintenance log, and payments cannot be exported.
+- Members counted as "inside" rely on check-outs or the three-hour window, so the count is an estimate.
 - No AI features in this version.

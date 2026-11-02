@@ -238,7 +238,7 @@ export function MemberClasses({
                   <p className="font-display text-sm font-bold">{c.name}</p>
                   <p className="text-[11px] text-muted-foreground">{c.day} {c.time} - {c.room}</p>
                 </div>
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{c.category}</span>
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">{c.category}</span>
               </div>
               <p className="mt-1.5 text-[11px] text-muted-foreground">Coach {trainerName(db.trainers, c.trainerId)} - {c.duration} min</p>
               <div className="mt-3">

@@ -1,7 +1,10 @@
-import { DEMO_ACCOUNTS, SEED_TRAINERS, deriveStatus, seedDatabase } from "../mockData";
-import { classSchema, firstError, maxCapacitySchema, trainerSchema } from "../lib/schemas";
+import { DEMO_ACCOUNTS, SEED_TRAINERS, deriveStatus, legacyMaintenanceLog, seedDatabase } from "../mockData";
+import { classSchema, firstError, maintenanceSchema, maxCapacitySchema, trainerSchema } from "../lib/schemas";
 import type {
   ClassInput,
+  GymVisitor,
+  MaintenanceEntry,
+  MaintenanceInput,
   Trainer,
   TrainerInput,
   BookingResult,
@@ -32,6 +35,10 @@ export function migrateDatabase(stored: Partial<Database>): Database {
   const db = stored as Database;
   if (!Array.isArray(db.trainers) || db.trainers.length === 0) db.trainers = SEED_TRAINERS.map((t) => ({ ...t }));
   if (typeof db.settings?.maxCapacity !== "number") db.settings = { ...db.settings, maxCapacity: 120 };
+  if (!Array.isArray(db.checkouts)) db.checkouts = [];
+  db.equipment.forEach((e) => {
+    if (!Array.isArray(e.log)) e.log = legacyMaintenanceLog(e);
+  });
   return db;
 }
 
@@ -192,10 +199,38 @@ export async function toggleMemberFreeze(id: string): Promise<Database> {
   return write(db);
 }
 
+// How long a check-in counts as "still in the gym" if nobody checks the member out.
+export const STAY_WINDOW_MS = 3 * 60 * 60 * 1000;
+
+// Members whose latest check-in is recent and has no check-out after it.
+export function currentlyInGym(db: Database, now: number = Date.now()): GymVisitor[] {
+  const lastIn = new Map<string, { at: number; name: string; iso: string }>();
+  for (const a of db.attendance) {
+    if (a.result !== "Granted") continue;
+    const at = Date.parse(a.at);
+    const prev = lastIn.get(a.memberId);
+    if (!prev || at > prev.at) lastIn.set(a.memberId, { at, name: a.memberName, iso: a.at });
+  }
+  const lastOut = new Map<string, number>();
+  for (const c of db.checkouts) {
+    const at = Date.parse(c.at);
+    if (at > (lastOut.get(c.memberId) ?? 0)) lastOut.set(c.memberId, at);
+  }
+  return [...lastIn.entries()]
+    .filter(([memberId, v]) => v.at > (lastOut.get(memberId) ?? 0) && now - v.at <= STAY_WINDOW_MS && v.at <= now + 60000)
+    .map(([memberId, v]) => ({ memberId, memberName: v.name, since: v.iso }))
+    .sort((x, y) => Date.parse(y.since) - Date.parse(x.since));
+}
+
+function findMemberByCode(db: Database, code: string): Member | undefined {
+  const key = code.trim().toUpperCase();
+  return db.members.find((m) => [m.id.toUpperCase(), m.code.toUpperCase(), m.email.toUpperCase()].includes(key));
+}
+
 // Pure rules for a check-in attempt. Records the attempt on `db` and returns the outcome.
 export function checkInIn(db: Database, code: string): { ok: boolean; message: string; memberName?: string } {
   const key = code.trim().toUpperCase();
-  const member = db.members.find((m) => [m.id.toUpperCase(), m.code.toUpperCase(), m.email.toUpperCase()].includes(key));
+  const member = findMemberByCode(db, code);
   if (!member) {
     db.attendance.unshift({ id: uid("ATT"), memberId: "unknown", memberName: key || "Unknown card", at: nowIso(), result: "Blocked", reason: "Card not recognised" });
     return { ok: false, message: "Card not recognised. Access denied." };
@@ -206,15 +241,36 @@ export function checkInIn(db: Database, code: string): { ok: boolean; message: s
     db.attendance.unshift({ id: uid("ATT"), memberId: member.id, memberName: member.name, at: nowIso(), result: "Blocked", reason: `Membership ${status.toLowerCase()}` });
     return { ok: false, message: `${member.name}: membership ${status.toLowerCase()}. Access blocked.`, memberName: member.name };
   }
+  const inside = currentlyInGym(db);
+  if (!inside.some((v) => v.memberId === member.id) && inside.length >= db.settings.maxCapacity) {
+    db.attendance.unshift({ id: uid("ATT"), memberId: member.id, memberName: member.name, at: nowIso(), result: "Blocked", reason: "Gym at capacity" });
+    return { ok: false, message: `The gym is at its limit of ${db.settings.maxCapacity} people. ${member.name} has to wait.`, memberName: member.name };
+  }
   db.attendance.unshift({ id: uid("ATT"), memberId: member.id, memberName: member.name, at: nowIso(), result: "Granted" });
   const warning = status === "Expiring Soon" ? " Renewal due soon." : "";
   return { ok: true, message: `Access granted for ${member.name}.${warning}`, memberName: member.name };
+}
+
+// Pure rule for checking a member out of the gym.
+export function checkOutIn(db: Database, code: string): { ok: boolean; message: string; memberName?: string } {
+  const member = findMemberByCode(db, code);
+  if (!member) return { ok: false, message: "Card not recognised." };
+  if (!currentlyInGym(db).some((v) => v.memberId === member.id)) return { ok: false, message: `${member.name} is not checked in.`, memberName: member.name };
+  db.checkouts.unshift({ id: uid("CO"), memberId: member.id, memberName: member.name, at: nowIso() });
+  return { ok: true, message: `${member.name} checked out.`, memberName: member.name };
 }
 
 export async function checkIn(code: string): Promise<CheckInResult> {
   await delay(320, 620);
   const db = read();
   const result = checkInIn(db, code);
+  return { ...result, db: write(db) };
+}
+
+export async function checkOut(code: string): Promise<CheckInResult> {
+  await delay(200, 400);
+  const db = read();
+  const result = checkOutIn(db, code);
   return { ...result, db: write(db) };
 }
 
@@ -304,6 +360,27 @@ export async function cycleEquipmentStatus(id: string): Promise<Database> {
   const order: EquipmentItem["status"][] = ["Operational", "Needs Service", "Out of Order"];
   item.status = order[(order.indexOf(item.status) + 1) % order.length];
   if (item.status === "Operational") item.lastService = new Date().toISOString().slice(0, 10);
+  return write(db);
+}
+
+export function logMaintenanceIn(db: Database, equipmentId: string, input: MaintenanceInput): MaintenanceEntry {
+  const problem = firstError(maintenanceSchema.safeParse(input));
+  if (problem) throw new Error(problem);
+  if (input.date > new Date().toISOString().slice(0, 10)) throw new Error("The service date cannot be in the future.");
+  const item = db.equipment.find((e) => e.id === equipmentId);
+  if (!item) throw new Error("Equipment not found");
+  const entry: MaintenanceEntry = { id: uid("ML"), date: input.date, note: input.note.trim(), status: input.status };
+  item.log.unshift(entry);
+  item.status = entry.status;
+  item.note = entry.note;
+  if (entry.status === "Operational") item.lastService = entry.date;
+  return entry;
+}
+
+export async function logMaintenance(equipmentId: string, input: MaintenanceInput): Promise<Database> {
+  await delay();
+  const db = read();
+  logMaintenanceIn(db, equipmentId, input);
   return write(db);
 }
 

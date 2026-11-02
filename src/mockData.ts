@@ -9,6 +9,7 @@ import type {
   FitnessClass,
   FitnessGoal,
   Member,
+  MaintenanceEntry,
   MemberStatus,
   Trainer,
   PaymentRecord,
@@ -49,6 +50,11 @@ export function deriveStatus(endDate: string, frozen?: boolean): MemberStatus {
   if (days < 0) return "Expired";
   if (days <= 14) return "Expiring Soon";
   return "Active";
+}
+
+// Older equipment records only had one note; turn it into the first log entry.
+export function legacyMaintenanceLog(item: Omit<EquipmentItem, "log">): MaintenanceEntry[] {
+  return item.note ? [{ id: `${item.id}-L1`, date: item.lastService, note: item.note, status: item.status }] : [];
 }
 
 export function trainerName(trainers: Trainer[], id: string): string {
@@ -254,7 +260,7 @@ export function seedDatabase(): Database {
     { id: "GL-2", memberId: "MEM-001", title: "Weekly sessions", current: 4, target: 5, unit: "x", deadline: shift(14) },
   ];
 
-  const equipment: EquipmentItem[] = [
+  const equipmentBase: Omit<EquipmentItem, "log">[] = [
     { id: "EQ-01", name: "Concept2 Rower", category: "Cardio", status: "Operational", lastService: shift(-40), note: "PM every 90 days" },
     { id: "EQ-02", name: "Assault Bike Pro", category: "Cardio", status: "Needs Service", lastService: shift(-120), note: "Chain tension loose" },
     { id: "EQ-03", name: "Squat Rack 4", category: "Strength", status: "Operational", lastService: shift(-12), note: "New J-hooks fitted" },
@@ -266,6 +272,7 @@ export function seedDatabase(): Database {
     { id: "EQ-09", name: "Reformer 3", category: "Pilates", status: "Operational", lastService: shift(-33), note: "" },
     { id: "EQ-10", name: "Sled Track", category: "Conditioning", status: "Operational", lastService: shift(-52), note: "" },
   ];
+  const equipment: EquipmentItem[] = equipmentBase.map((e) => ({ ...e, log: legacyMaintenanceLog(e) }));
 
   const notifications: AppNotification[] = [
     { id: "NT-1", title: "Spin class full", body: "Sunrise Spin hit capacity. 1 member on the waitlist.", at: new Date(Date.now() - 12 * 60000).toISOString(), read: false, audience: "all" },
@@ -279,6 +286,7 @@ export function seedDatabase(): Database {
   return {
     members,
     trainers: SEED_TRAINERS.map((t) => ({ ...t })),
+    checkouts: [],
     classes,
     bookings,
     waitlist,

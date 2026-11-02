@@ -6,7 +6,7 @@ import { AlertTriangle, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDas
 import type { LucideIcon } from "lucide-react";
 import * as api from "./api/mockApi";
 import { DEMO_ACCOUNTS } from "./mockData";
-import type { BodyMeasurement, ClassInput, Database, FitnessGoal, MemberInput, PaymentStatus, PlanName, Role, Session, TrainerInput, WorkoutPlan } from "./types";
+import type { BodyMeasurement, ClassInput, Database, FitnessGoal, MaintenanceInput, MemberInput, PaymentStatus, PlanName, Role, Session, TrainerInput, WorkoutPlan } from "./types";
 import Navbar from "./components/Navbar";
 import { btnGhost, btnPrimary, input, panel } from "./components/Navbar";
 import { AdminOverview, MemberDirectory, ReceptionTerminal, SettingsView } from "./components/AdminReceptionViews";
@@ -254,6 +254,20 @@ export default function App() {
     }
   };
 
+  const handleCheckOut = async (code: string) => {
+    try {
+      const result = await api.checkOut(code);
+      setDb(result.db);
+      if (result.ok) toast.success(result.message);
+      else toast.error(result.message);
+      return { ok: result.ok, message: result.message };
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Check-out failed.";
+      toast.error(message);
+      return { ok: false, message };
+    }
+  };
+
   const handleBook = async (classId: string, memberId: string) => {
     try {
       const result = await api.bookClass(classId, memberId);
@@ -323,7 +337,7 @@ export default function App() {
           />
         );
       case "terminal":
-        return <ReceptionTerminal db={db} onCheckIn={handleCheckIn} />;
+        return <ReceptionTerminal db={db} onCheckIn={handleCheckIn} onCheckOut={handleCheckOut} />;
       case "classes":
         return session.role === "member" ? (
           <MemberClasses
@@ -347,7 +361,13 @@ export default function App() {
       case "payments":
         return <PaymentsView db={db} onLogPayment={(p: { memberId: string; plan: PlanName; amount: number; method: string; status: PaymentStatus }) => mutate(() => api.addPayment(p), "Payment recorded")} />;
       case "equipment":
-        return <EquipmentView db={db} onCycle={(id: string) => mutate(() => api.cycleEquipmentStatus(id), "Equipment status advanced")} />;
+        return (
+          <EquipmentView
+            db={db}
+            onCycle={(id: string) => mutate(() => api.cycleEquipmentStatus(id), "Equipment status advanced")}
+            onLog={(id: string, value: MaintenanceInput) => mutateOk(() => api.logMaintenance(id, value), "Maintenance logged")}
+          />
+        );
       case "settings":
         return <SettingsView db={db} onSave={(settings) => mutate(() => api.updateSettings(settings), "Settings saved")} onReset={() => mutate(api.resetDemoData, "Demo data restored")} onRunTests={runTests} testResults={tests} running={runningTests} />;
       case "roster":
