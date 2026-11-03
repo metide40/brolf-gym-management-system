@@ -54,7 +54,7 @@ export function Stat({ label, value, hint, icon: Icon, tone = "primary" }: { lab
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className={`${panel} p-4`}>
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
           <p className="mt-2 font-display text-3xl font-semibold tabular-nums text-foreground md:text-4xl">{value}</p>
           {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
@@ -130,9 +130,9 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4">
-        <div className="flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-2 px-3 sm:gap-3 sm:px-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Dumbbell size={18} strokeWidth={2.4} />
           </span>
           <div className="leading-tight">
@@ -141,12 +141,12 @@ export default function Navbar({
           </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-2.5 py-1.5 text-xs font-semibold">
+        <div className="ml-auto hidden items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-2.5 py-1.5 text-xs font-semibold sm:flex">
           <ShieldCheck size={14} className="text-primary" />
           <span className="hidden sm:inline">{ROLE_LABEL[session.role]}</span>
         </div>
 
-        <div className="relative">
+        <div className="relative ml-auto shrink-0 sm:ml-0">
           <button onClick={() => setOpenBell((v) => !v)} className={`${btnGhost} relative !p-2`} aria-label="Notifications">
             <Bell size={16} />
             {unread > 0 ? <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{unread}</span> : null}
@@ -175,7 +175,7 @@ export default function Navbar({
           </AnimatePresence>
         </div>
 
-        <button onClick={onToggleTheme} className={`${btnGhost} !p-2`} aria-label="Toggle theme">
+        <button onClick={onToggleTheme} className={`${btnGhost} shrink-0 !p-2`} aria-label="Toggle theme">
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
@@ -187,7 +187,7 @@ export default function Navbar({
           </div>
         </div>
 
-        <button onClick={onLogout} className={`${btnGhost} !p-2`} aria-label="Log out">
+        <button onClick={onLogout} className={`${btnGhost} shrink-0 !p-2`} aria-label="Log out">
           <LogOut size={16} />
         </button>
       </div>

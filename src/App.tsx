@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
@@ -73,6 +73,12 @@ type WorkspaceProps = {
 function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onLogout, renderSection }: WorkspaceProps) {
   const { role, section } = useParams();
   const location = useLocation();
+  const navRef = useRef<HTMLElement>(null);
+
+  // On phones the tab row scrolls sideways, so keep the active tab in view.
+  useEffect(() => {
+    navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [location.pathname]);
 
   if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
 
@@ -87,7 +93,8 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onLogout, re
       <Navbar session={session} notifications={db?.notifications ?? []} theme={theme} onToggleTheme={onToggleTheme} onMarkRead={onMarkRead} onLogout={onLogout} />
       <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-4 py-5 md:flex-row">
         <aside className="md:w-56 md:shrink-0">
-          <nav aria-label="Main" className="flex gap-1.5 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
+          <div className="relative">
+          <nav ref={navRef} aria-label="Main" className="flex snap-x gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] md:flex-col md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
             {items.map((t) => {
               const Icon = t.icon;
               return (
@@ -95,7 +102,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onLogout, re
                   key={t.path}
                   to={`/${session.role}/${t.path}`}
                   className={({ isActive }) =>
-                    `flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition md:w-full ${isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`
+                    `flex shrink-0 snap-start items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-semibold transition md:w-full ${isActive ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`
                   }
                 >
                   <Icon size={16} strokeWidth={2} />
@@ -104,6 +111,8 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onLogout, re
               );
             })}
           </nav>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent md:hidden" />
+          </div>
           <div className={`${panel} mt-3 hidden p-3 md:block`}>
             <p className="text-xs font-semibold text-foreground">{ROLE_LABEL[session.role]} workspace</p>
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{ROLE_BLURB[session.role]}</p>

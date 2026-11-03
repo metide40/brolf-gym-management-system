@@ -356,15 +356,17 @@ export function ClassesBoard({
                 )}
               </div>
               {canManage ? (
-                <div className="mt-2 flex flex-wrap gap-2 border-t border-border pt-3">
-                  <button onClick={() => { setEditingClass(c); setFormOpen(true); }} className={`${btnGhost} text-xs`}><Pencil size={13} /> Edit</button>
+                <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-3">
                   {confirmCancelId === c.id ? (
                     <>
-                      <button onClick={() => act(async () => { await onCancelClass(c.id); setConfirmCancelId(null); })} disabled={busy} className={`${btn} border border-rose-400 text-xs text-rose-500`}>Yes, cancel class</button>
-                      <button onClick={() => setConfirmCancelId(null)} className={`${btnGhost} text-xs`}>Keep</button>
+                      <button onClick={() => act(async () => { await onCancelClass(c.id); setConfirmCancelId(null); })} disabled={busy} className={`${btn} w-full border border-rose-400 px-2.5 text-xs text-rose-500`}>Yes, cancel class</button>
+                      <button onClick={() => setConfirmCancelId(null)} className={`${btnGhost} w-full px-2.5 text-xs`}>Keep</button>
                     </>
                   ) : (
-                    <button onClick={() => setConfirmCancelId(c.id)} className={`${btn} border border-border text-xs text-muted-foreground hover:border-rose-400 hover:text-rose-500`}><Trash2 size={13} /> Cancel class</button>
+                    <>
+                      <button onClick={() => { setEditingClass(c); setFormOpen(true); }} className={`${btnGhost} w-full px-2.5 text-xs`}><Pencil size={13} /> Edit</button>
+                      <button onClick={() => setConfirmCancelId(c.id)} className={`${btn} w-full border border-border px-2.5 text-xs text-muted-foreground hover:border-rose-400 hover:text-rose-500`}><Trash2 size={13} /> Cancel class</button>
+                    </>
                   )}
                 </div>
               ) : null}
