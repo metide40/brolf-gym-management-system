@@ -60,7 +60,7 @@ export function AdminOverview({ db }: { db: Database }) {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Stat label="Total members" value={db.members.length} hint={`${active} active right now`} icon={Users} tone="neutral" />
         <Stat label="Monthly revenue" value={`$${revenue.toLocaleString()}`} hint={`$${overdue.toLocaleString()} overdue`} icon={Wallet} tone="neutral" />
-        <Stat label="Check-ins today" value={todayVisits} hint={`${currentlyInGym(db).length} in the gym now, ${db.attendance.filter((a) => a.result === "Blocked").length} blocked`} icon={Activity} tone="neutral" />
+        <Stat label="Check-ins today" value={todayVisits} hint={`${currentlyInGym(db).length} in gym now, ${db.attendance.filter((a) => a.result === "Blocked").length} blocked`} icon={Activity} tone="neutral" />
         <Stat label="Expiring in 14 days" value={expiring.length} hint="Renewal reminders queued" icon={AlertTriangle} tone="amber" />
       </div>
 
