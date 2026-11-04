@@ -65,12 +65,13 @@ type WorkspaceProps = {
   theme: "dark" | "light";
   onToggleTheme: () => void;
   onMarkRead: () => void;
+  onClearNotifications: () => void;
   onLogout: () => void;
   renderSection: (key: TabKey) => ReactNode;
 };
 
 // Route guard + page shell. Anything under /<role>/<section> goes through here.
-function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onLogout, renderSection }: WorkspaceProps) {
+function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotifications, onLogout, renderSection }: WorkspaceProps) {
   const { role, section } = useParams();
   const location = useLocation();
   const navRef = useRef<HTMLElement>(null);
@@ -90,7 +91,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onLogout, re
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
-      <Navbar session={session} notifications={db?.notifications ?? []} theme={theme} onToggleTheme={onToggleTheme} onMarkRead={onMarkRead} onLogout={onLogout} />
+      <Navbar session={session} notifications={db?.notifications ?? []} theme={theme} onToggleTheme={onToggleTheme} onMarkRead={onMarkRead} onClear={onClearNotifications} onLogout={onLogout} />
       <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-4 py-5 md:flex-row">
         <aside className="md:w-56 md:shrink-0">
           <div className="relative">
@@ -432,6 +433,7 @@ export default function App() {
               theme={theme}
               onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
               onMarkRead={() => { if (session) void mutate(() => api.markNotificationsRead(session)); }}
+              onClearNotifications={() => { if (session) void mutate(() => api.clearNotifications(session)); }}
               onLogout={handleLogout}
               renderSection={renderSection}
             />

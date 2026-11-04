@@ -23,7 +23,7 @@ import type {
   EquipmentItem,
 } from "../types";
 
-import { markAllReadFor, normalizeNotification, type StoredNotification } from "../lib/notifications";
+import { clearAllFor, markAllReadFor, normalizeNotification, type StoredNotification } from "../lib/notifications";
 
 const DB_KEY = "fitcore.db.v1";
 const SESSION_KEY = "fitcore.session.v1";
@@ -411,6 +411,14 @@ export async function markNotificationsRead(session: Session): Promise<Database>
   await delay(90, 180);
   const db = read();
   db.notifications = markAllReadFor(db.notifications, session);
+  return write(db);
+}
+
+// Clears this person's list. Other people's lists are untouched, and Reset demo data brings everything back.
+export async function clearNotifications(session: Session): Promise<Database> {
+  await delay(90, 180);
+  const db = read();
+  db.notifications = clearAllFor(db.notifications, session);
   return write(db);
 }
 

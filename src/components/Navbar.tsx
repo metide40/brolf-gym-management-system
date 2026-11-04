@@ -115,6 +115,7 @@ export default function Navbar({
   theme,
   onToggleTheme,
   onMarkRead,
+  onClear,
   onLogout,
 }: {
   session: Session;
@@ -122,6 +123,7 @@ export default function Navbar({
   theme: "dark" | "light";
   onToggleTheme: () => void;
   onMarkRead: () => void;
+  onClear: () => void;
   onLogout: () => void;
 }) {
   const [openBell, setOpenBell] = useState(false);
@@ -157,12 +159,15 @@ export default function Navbar({
               <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className={`${panel} absolute right-0 top-11 z-50 w-80 bg-card p-2 shadow-2xl`}>
                 <div className="flex items-center justify-between px-2 py-1">
                   <p className="text-xs font-semibold text-muted-foreground">Notifications</p>
-                  <button onClick={onMarkRead} className="text-[11px] font-semibold text-primary hover:underline">Mark all read</button>
+                  <div className="flex items-center gap-3">
+                    {unread > 0 ? <button onClick={onMarkRead} className="text-[11px] font-semibold text-primary hover:underline">Mark all read</button> : null}
+                    {visible.length > 0 ? <button onClick={onClear} className="text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:underline">Clear all</button> : null}
+                  </div>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
                   {visible.length === 0 ? <p className="px-2 py-6 text-center text-xs text-muted-foreground">You are all caught up.</p> : null}
                   {visible.map((n) => (
-                    <div key={n.id} className="flex gap-2 rounded-xl px-2 py-2 hover:bg-secondary/60">
+                    <div key={n.id} className={`flex gap-2 rounded-xl px-2 py-2 hover:bg-secondary/60 ${isReadBy(n, session) ? "opacity-70" : ""}`}>
                       <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${isReadBy(n, session) ? "bg-muted-foreground/40" : "bg-primary"}`} />
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-foreground">{n.title}</p>

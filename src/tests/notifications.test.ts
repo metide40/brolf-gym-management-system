@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEMO_ACCOUNTS, seedDatabase } from "../mockData";
 import { addBookingIn, cancelBookingIn, cancelClassIn, migrateDatabase } from "../api/mockApi";
-import { isReadBy, isVisibleTo, markAllReadFor, normalizeNotification, unreadCount, visibleNotifications, type StoredNotification } from "../lib/notifications";
+import { clearAllFor, isReadBy, isVisibleTo, markAllReadFor, normalizeNotification, unreadCount, visibleNotifications, type StoredNotification } from "../lib/notifications";
 import type { AppNotification, Database, Session } from "../types";
 
 const freshDb = (): Database => {
@@ -77,6 +77,46 @@ describe("reading is per person", () => {
   it("is not affected by upper or lower case in the email", () => {
     const after = markAllReadFor([note({ audience: "admin" })], { ...admin, email: "ADMIN@fitcore.io" });
     expect(isReadBy(after[0], admin)).toBe(true);
+  });
+});
+
+describe("clearing a list", () => {
+  it("removes everything from the signed-in person's list only", () => {
+    const all = [note({ id: "A", audience: ["admin", "reception"] }), note({ id: "B", audience: "admin" })];
+    const after = clearAllFor(all, admin);
+    expect(visibleNotifications(after, admin)).toHaveLength(0);
+    expect(visibleNotifications(after, reception)).toHaveLength(1);
+    expect(after).toHaveLength(2); // nothing is deleted from the data
+  });
+
+  it("does not count cleared notifications as unread", () => {
+    const after = clearAllFor([note({ audience: "admin" })], admin);
+    expect(unreadCount(after, admin)).toBe(0);
+  });
+
+  it("shows notifications that arrive after a clear", () => {
+    const cleared = clearAllFor([note({ id: "A", audience: "admin" })], admin);
+    const later = [note({ id: "B", audience: "admin" }), ...cleared];
+    expect(visibleNotifications(later, admin).map((n) => n.id)).toEqual(["B"]);
+  });
+
+  it("leaves personal notifications of other people alone", () => {
+    const all = [note({ id: "A", audience: "member", memberId: "M-2" })];
+    const after = clearAllFor(all, memberSession("M-1"));
+    expect(after[0].clearedBy ?? []).toEqual([]);
+    expect(visibleNotifications(after, memberSession("M-2"))).toHaveLength(1);
+  });
+
+  it("is safe to clear twice", () => {
+    const once = clearAllFor([note({ audience: "admin" })], admin);
+    const twice = clearAllFor(once, admin);
+    expect(twice[0].clearedBy).toEqual(["admin@fitcore.io"]);
+  });
+
+  it("works on saved data that has no clearedBy field", () => {
+    const db = migrateDatabase(structuredClone(seedDatabase()));
+    expect(db.notifications.every((n) => n.clearedBy === undefined)).toBe(true);
+    expect(visibleNotifications(db.notifications, admin)).toHaveLength(3);
   });
 });
 

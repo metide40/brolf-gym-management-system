@@ -11,12 +11,17 @@ const audienceRoles = (audience: AppNotification["audience"]): Role[] | "all" =>
 
 // Personal notifications (memberId / trainerId) go to that one person only.
 // The rest go to everyone with a matching role, or to everyone when the audience is "all".
-export function isVisibleTo(n: AppNotification, session: Session): boolean {
+function isAddressedTo(n: AppNotification, session: Session): boolean {
   if (n.memberId) return session.role === "member" && session.memberId === n.memberId;
   if (n.trainerId) return session.role === "trainer" && session.trainerId === n.trainerId;
   const roles = audienceRoles(n.audience);
   return roles === "all" || roles.includes(session.role);
 }
+
+export const isClearedBy = (n: AppNotification, session: Session): boolean => (n.clearedBy ?? []).includes(userKey(session));
+
+// What this person sees in their list: addressed to them, and not cleared by them.
+export const isVisibleTo = (n: AppNotification, session: Session): boolean => isAddressedTo(n, session) && !isClearedBy(n, session);
 
 export const visibleNotifications = (all: AppNotification[], session: Session): AppNotification[] => all.filter((n) => isVisibleTo(n, session));
 
@@ -29,6 +34,12 @@ export const unreadCount = (all: AppNotification[], session: Session): number =>
 export function markAllReadFor(all: AppNotification[], session: Session): AppNotification[] {
   const key = userKey(session);
   return all.map((n) => (isVisibleTo(n, session) && !n.readBy.includes(key) ? { ...n, readBy: [...n.readBy, key] } : n));
+}
+
+// Removes everything this person can see from their own list. Other people still see their copies.
+export function clearAllFor(all: AppNotification[], session: Session): AppNotification[] {
+  const key = userKey(session);
+  return all.map((n) => (isVisibleTo(n, session) ? { ...n, clearedBy: [...(n.clearedBy ?? []), key] } : n));
 }
 
 // Upgrades a notification saved before per-person read state. A notification that was

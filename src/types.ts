@@ -173,6 +173,8 @@ export interface AppNotification {
   trainerId?: string;
   // Sign-in emails of the people who have read it, so reading is per person.
   readBy: string[];
+  // Sign-in emails of the people who cleared it from their list. It stays for everyone else.
+  clearedBy?: string[];
 }
 
 export interface GymSettings {
