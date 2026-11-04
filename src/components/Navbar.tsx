@@ -156,7 +156,7 @@ export default function Navbar({
           </button>
           <AnimatePresence>
             {openBell ? (
-              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className={`${panel} absolute right-0 top-11 z-50 w-80 bg-card p-2 shadow-2xl`}>
+              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className={`${panel} absolute right-0 top-11 z-50 w-80 !bg-card !backdrop-blur-none p-2 shadow-2xl`}>
                 <div className="flex items-center justify-between px-2 py-1">
                   <p className="text-xs font-semibold text-muted-foreground">Notifications</p>
                   <div className="flex items-center gap-3">
