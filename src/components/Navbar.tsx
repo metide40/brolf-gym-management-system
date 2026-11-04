@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Dumbbell, LogOut, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import type { AppNotification, Role, Session } from "../types";
@@ -127,9 +127,35 @@ export default function Navbar({
   onLogout: () => void;
 }) {
   const [openBell, setOpenBell] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
   const visible = visibleNotifications(notifications, session);
   const unread = unreadCount(notifications, session);
   const initials = session.name.split(" ").map((p) => p[0]).join("").slice(0, 2);
+
+  useEffect(() => {
+    if (!openBell) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node) || !bellRef.current?.contains(target)) {
+        setOpenBell(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpenBell(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openBell]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
@@ -149,8 +175,8 @@ export default function Navbar({
           <span className="hidden sm:inline">{ROLE_LABEL[session.role]}</span>
         </div>
 
-        <div className="relative ml-auto shrink-0 sm:ml-0">
-          <button onClick={() => setOpenBell((v) => !v)} className={`${btnGhost} relative !p-2`} aria-label="Notifications">
+        <div ref={bellRef} className="relative ml-auto shrink-0 sm:ml-0">
+          <button onClick={() => setOpenBell((v) => !v)} className={`${btnGhost} relative !p-2`} aria-label="Notifications" aria-expanded={openBell} aria-haspopup="true">
             <Bell size={16} />
             {unread > 0 ? <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{unread}</span> : null}
           </button>
