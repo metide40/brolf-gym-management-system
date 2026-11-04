@@ -93,7 +93,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
     <div className="min-h-[100dvh] bg-background text-foreground">
       <Navbar session={session} notifications={db?.notifications ?? []} theme={theme} onToggleTheme={onToggleTheme} onMarkRead={onMarkRead} onClear={onClearNotifications} onLogout={onLogout} />
       <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-4 py-5 md:flex-row">
-        <aside className="md:w-56 md:shrink-0">
+        <aside className="sticky top-16 z-30 -mx-4 bg-background px-4 py-2 md:top-20 md:z-auto md:mx-0 md:max-h-[calc(100dvh-6rem)] md:w-56 md:shrink-0 md:self-start md:overflow-y-auto md:bg-transparent md:px-0 md:py-0">
           <div className="relative">
           <nav ref={navRef} aria-label="Main" className="flex snap-x gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] md:flex-col md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
             {items.map((t) => {
