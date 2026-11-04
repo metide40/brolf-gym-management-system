@@ -167,8 +167,12 @@ export interface AppNotification {
   title: string;
   body: string;
   at: string;
-  read: boolean;
-  audience: Role | "all";
+  // Who it is for by role. A notification with memberId or trainerId is personal and goes to that one person only.
+  audience: Role | Role[] | "all";
+  memberId?: string;
+  trainerId?: string;
+  // Sign-in emails of the people who have read it, so reading is per person.
+  readBy: string[];
 }
 
 export interface GymSettings {

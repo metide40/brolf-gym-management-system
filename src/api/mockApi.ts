@@ -1,6 +1,7 @@
 import { DEMO_ACCOUNTS, SEED_TRAINERS, deriveStatus, legacyMaintenanceLog, seedDatabase } from "../mockData";
 import { classSchema, firstError, maintenanceSchema, maxCapacitySchema, trainerSchema } from "../lib/schemas";
 import type {
+  AppNotification,
   ClassInput,
   GymVisitor,
   MaintenanceEntry,
@@ -14,7 +15,6 @@ import type {
   GymSettings,
   Member,
   MemberInput,
-  Role,
   Session,
   TestResult,
   WorkoutPlan,
@@ -23,6 +23,8 @@ import type {
   EquipmentItem,
 } from "../types";
 
+import { markAllReadFor, normalizeNotification, type StoredNotification } from "../lib/notifications";
+
 const DB_KEY = "fitcore.db.v1";
 const SESSION_KEY = "fitcore.session.v1";
 
@@ -30,12 +32,20 @@ const delay = (min = 160, max = 340) => new Promise<void>((r) => setTimeout(r, m
 const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 const nowIso = () => new Date().toISOString();
 
+type NotificationTarget = Pick<AppNotification, "audience" | "memberId" | "trainerId">;
+
+// Adds a notification at the top of the list. Personal ones carry a memberId or trainerId.
+function notify(db: Database, title: string, body: string, target: NotificationTarget): void {
+  db.notifications.unshift({ id: uid("NT"), title, body, at: nowIso(), readBy: [], ...target });
+}
+
 // Fills in fields added after a browser first saved its data, so older saved data keeps working.
 export function migrateDatabase(stored: Partial<Database>): Database {
   const db = stored as Database;
   if (!Array.isArray(db.trainers) || db.trainers.length === 0) db.trainers = SEED_TRAINERS.map((t) => ({ ...t }));
   if (typeof db.settings?.maxCapacity !== "number") db.settings = { ...db.settings, maxCapacity: 120 };
   if (!Array.isArray(db.checkouts)) db.checkouts = [];
+  db.notifications = (Array.isArray(db.notifications) ? db.notifications : []).map((n) => normalizeNotification(n as StoredNotification, DEMO_ACCOUNTS));
   db.equipment.forEach((e) => {
     if (!Array.isArray(e.log)) e.log = legacyMaintenanceLog(e);
   });
@@ -109,14 +119,9 @@ export function cancelBookingIn(db: Database, bookingId: string): { ok: boolean;
   db.waitlist = db.waitlist.filter((w) => w.id !== next.id);
   db.bookings.push({ id: uid("BKG"), classId: booking.classId, memberId: next.memberId, createdAt: nowIso() });
   const name = db.members.find((m) => m.id === next.memberId)?.name ?? "A member";
-  db.notifications.unshift({
-    id: uid("NT"),
-    title: "Waitlist auto-promoted",
-    body: `${name} moved from the waitlist into ${cls?.name ?? "the class"} at ${cls?.time ?? ""}.`,
-    at: nowIso(),
-    read: false,
-    audience: "all",
-  });
+  // The promoted member hears about it personally. Staff get a separate copy, and nobody else does.
+  notify(db, "You got a seat", `A seat opened up in ${cls?.name ?? "the class"} at ${cls?.time ?? ""} and you were moved off the waitlist.`, { audience: "member", memberId: next.memberId });
+  notify(db, "Waitlist auto-promoted", `${name} moved from the waitlist into ${cls?.name ?? "the class"} at ${cls?.time ?? ""}.`, { audience: ["admin", "reception"] });
   return { ok: true, message: `${name} was promoted from the waitlist.`, promoted: name };
 }
 
@@ -401,10 +406,11 @@ export async function saveGoal(goal: FitnessGoal): Promise<Database> {
   return write(db);
 }
 
-export async function markNotificationsRead(role: Role): Promise<Database> {
+// Marks everything this person can see as read. Other people's unread notifications are untouched.
+export async function markNotificationsRead(session: Session): Promise<Database> {
   await delay(90, 180);
   const db = read();
-  db.notifications = db.notifications.map((n) => (n.audience === role || n.audience === "all" ? { ...n, read: true } : n));
+  db.notifications = markAllReadFor(db.notifications, session);
   return write(db);
 }
 
@@ -507,17 +513,14 @@ export function cancelClassIn(db: Database, classId: string): { ok: boolean; mes
   const cls = db.classes.find((c) => c.id === classId);
   if (!cls) return { ok: false, message: "Class not found.", removedBookings: 0 };
   const removedBookings = db.bookings.filter((b) => b.classId === classId).length;
+  const affected = [...new Set([...db.bookings, ...db.waitlist].filter((x) => x.classId === classId).map((x) => x.memberId))];
   db.classes = db.classes.filter((c) => c.id !== classId);
   db.bookings = db.bookings.filter((b) => b.classId !== classId);
   db.waitlist = db.waitlist.filter((w) => w.classId !== classId);
-  db.notifications.unshift({
-    id: uid("NT"),
-    title: "Class cancelled",
-    body: `${cls.name} on ${cls.day} at ${cls.time} was cancelled. ${removedBookings} booking${removedBookings === 1 ? "" : "s"} removed.`,
-    at: nowIso(),
-    read: false,
-    audience: "all",
-  });
+  const when = `${cls.name} on ${cls.day} at ${cls.time}`;
+  notify(db, "Class cancelled", `${when} was cancelled. ${removedBookings} booking${removedBookings === 1 ? "" : "s"} removed.`, { audience: ["admin", "reception"] });
+  notify(db, "Your class was cancelled", `${when} was cancelled.`, { audience: "trainer", trainerId: cls.trainerId });
+  affected.forEach((memberId) => notify(db, "Class cancelled", `${when} was cancelled and your place was removed.`, { audience: "member", memberId }));
   return { ok: true, message: `${cls.name} cancelled. ${removedBookings} booking${removedBookings === 1 ? "" : "s"} removed.`, removedBookings };
 }
 

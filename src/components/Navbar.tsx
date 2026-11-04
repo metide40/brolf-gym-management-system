@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Dumbbell, LogOut, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import type { AppNotification, Role, Session } from "../types";
+import { isReadBy, unreadCount, visibleNotifications } from "../lib/notifications";
 
 export const panel = "rounded-2xl border border-border bg-card/70 backdrop-blur-sm";
 export const btn = "inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition disabled:opacity-50 active:scale-[0.98]";
@@ -124,8 +125,8 @@ export default function Navbar({
   onLogout: () => void;
 }) {
   const [openBell, setOpenBell] = useState(false);
-  const visible = notifications.filter((n) => n.audience === "all" || n.audience === session.role);
-  const unread = visible.filter((n) => !n.read).length;
+  const visible = visibleNotifications(notifications, session);
+  const unread = unreadCount(notifications, session);
   const initials = session.name.split(" ").map((p) => p[0]).join("").slice(0, 2);
 
   return (
@@ -162,7 +163,7 @@ export default function Navbar({
                   {visible.length === 0 ? <p className="px-2 py-6 text-center text-xs text-muted-foreground">You are all caught up.</p> : null}
                   {visible.map((n) => (
                     <div key={n.id} className="flex gap-2 rounded-xl px-2 py-2 hover:bg-secondary/60">
-                      <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${n.read ? "bg-muted-foreground/40" : "bg-primary"}`} />
+                      <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${isReadBy(n, session) ? "bg-muted-foreground/40" : "bg-primary"}`} />
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-foreground">{n.title}</p>
                         <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{n.body}</p>

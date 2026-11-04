@@ -275,12 +275,12 @@ export function seedDatabase(): Database {
   const equipment: EquipmentItem[] = equipmentBase.map((e) => ({ ...e, log: legacyMaintenanceLog(e) }));
 
   const notifications: AppNotification[] = [
-    { id: "NT-1", title: "Spin class full", body: "Sunrise Spin hit capacity. 1 member on the waitlist.", at: new Date(Date.now() - 12 * 60000).toISOString(), read: false, audience: "all" },
-    { id: "NT-2", title: "Membership expiring", body: "6 memberships expire within 14 days. Send renewal reminders.", at: new Date(Date.now() - 74 * 60000).toISOString(), read: false, audience: "admin" },
-    { id: "NT-3", title: "Equipment flagged", body: "Treadmill 9 is out of order. Maintenance ticket open.", at: new Date(Date.now() - 150 * 60000).toISOString(), read: false, audience: "admin" },
-    { id: "NT-4", title: "New plan assigned", body: "Marcus Vale assigned Hypertrophy Block A to your profile.", at: new Date(Date.now() - 260 * 60000).toISOString(), read: false, audience: "member" },
-    { id: "NT-5", title: "Overdue invoice", body: "3 invoices are past due. Follow up at the front desk.", at: new Date(Date.now() - 320 * 60000).toISOString(), read: true, audience: "reception" },
-    { id: "NT-6", title: "Roll call reminder", body: "Crossfit WOD at 17:30 has 9 attendees confirmed.", at: new Date(Date.now() - 420 * 60000).toISOString(), read: true, audience: "trainer" },
+    { id: "NT-1", title: "Spin class full", body: "Sunrise Spin hit capacity. 1 member on the waitlist.", at: new Date(Date.now() - 12 * 60000).toISOString(), audience: ["admin", "reception"], readBy: [] },
+    { id: "NT-2", title: "Membership expiring", body: "6 memberships expire within 14 days. Send renewal reminders.", at: new Date(Date.now() - 74 * 60000).toISOString(), audience: "admin", readBy: [] },
+    { id: "NT-3", title: "Equipment flagged", body: "Treadmill 9 is out of order. Maintenance ticket open.", at: new Date(Date.now() - 150 * 60000).toISOString(), audience: "admin", readBy: [] },
+    { id: "NT-4", title: "New plan assigned", body: "Marcus Vale assigned Hypertrophy Block A to your profile.", at: new Date(Date.now() - 260 * 60000).toISOString(), audience: "member", memberId: members[0].id, readBy: [] },
+    { id: "NT-5", title: "Overdue invoice", body: "3 invoices are past due. Follow up at the front desk.", at: new Date(Date.now() - 320 * 60000).toISOString(), audience: "reception", readBy: ["reception@fitcore.io"] },
+    { id: "NT-6", title: "Roll call reminder", body: "Crossfit WOD at 17:30 has 9 attendees confirmed.", at: new Date(Date.now() - 420 * 60000).toISOString(), audience: "trainer", trainerId: "TR-01", readBy: ["trainer@fitcore.io"] },
   ];
 
   return {

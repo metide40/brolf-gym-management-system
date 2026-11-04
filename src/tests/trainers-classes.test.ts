@@ -194,8 +194,11 @@ describe("cancelling a class", () => {
     expect(db.classes.some((c) => c.id === cls.id)).toBe(false);
     expect(db.bookings.some((b) => b.classId === cls.id)).toBe(false);
     expect(db.waitlist.some((w) => w.classId === cls.id)).toBe(false);
-    expect(db.notifications).toHaveLength(notificationsBefore + 1);
-    expect(db.notifications[0].title).toBe("Class cancelled");
+    // One for staff, one for the class trainer, and one for each booked or waitlisted member.
+    expect(db.notifications).toHaveLength(notificationsBefore + 5);
+    const created = db.notifications.slice(0, db.notifications.length - notificationsBefore);
+    expect(created.filter((n) => n.memberId).map((n) => n.memberId).sort()).toEqual(["M-1", "M-2", "M-3"]);
+    expect(created.some((n) => n.title === "Class cancelled" && Array.isArray(n.audience))).toBe(true);
   });
 
   it("reports an unknown class without changing anything", () => {

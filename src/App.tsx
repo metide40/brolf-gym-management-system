@@ -431,7 +431,7 @@ export default function App() {
               db={db}
               theme={theme}
               onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
-              onMarkRead={() => mutate(() => api.markNotificationsRead(session?.role ?? "admin"))}
+              onMarkRead={() => { if (session) void mutate(() => api.markNotificationsRead(session)); }}
               onLogout={handleLogout}
               renderSection={renderSection}
             />
