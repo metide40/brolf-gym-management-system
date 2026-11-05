@@ -397,7 +397,7 @@ export function ReceptionTerminal({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <input autoFocus value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") scan(code); }} placeholder="Member code, for example FC-2001" className={`${input} min-w-[10rem] flex-1`} />
+            <input autoFocus value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") scan(code); }} placeholder="Member code, e.g. FC-2001" className={`${input} min-w-[10rem] flex-1`} />
             <button onClick={() => scan(code)} disabled={busy} className={`${btnPrimary} shrink-0 whitespace-nowrap`}>{busy ? "Checking" : "Check in"}</button>
             <button onClick={() => leave(code)} disabled={busy} className={`${btnGhost} shrink-0 whitespace-nowrap`}>Check out</button>
           </div>
