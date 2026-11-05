@@ -114,10 +114,6 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
           </nav>
           <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent md:hidden" />
           </div>
-          <div className={`${panel} mt-3 hidden p-3 md:block`}>
-            <p className="text-xs font-semibold text-foreground">{ROLE_LABEL[session.role]} workspace</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{ROLE_BLURB[session.role]}</p>
-          </div>
         </aside>
 
         <main className="min-w-0 flex-1">
