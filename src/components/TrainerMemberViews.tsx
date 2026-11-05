@@ -290,8 +290,8 @@ export function MemberWorkouts({ db, memberId, onToggleExercise }: { db: Databas
               </div>
               <div className="mt-3 space-y-1.5">
                 {p.exercises.map((e) => (
-                  <button key={e.id} onClick={() => onToggleExercise(p.id, e.id)} className={`flex w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition ${e.done ? "border-primary/30 bg-primary/8" : "border-border/60 hover:bg-secondary/50"}`}>
-                    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${e.done ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>{e.done ? <Check size={12} /> : null}</span>
+                  <button key={e.id} onClick={() => onToggleExercise(p.id, e.id)} aria-pressed={e.done} className={`group flex w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition ${e.done ? "border-primary/30 bg-primary/8" : "border-border/60 hover:bg-secondary/50"}`}>
+                    <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition ${e.done ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/60 group-hover:border-foreground/70"}`}>{e.done ? <Check size={12} /> : null}</span>
                     <span className="min-w-0 flex-1">
                       <span className={`block truncate text-xs font-semibold ${e.done ? "line-through text-muted-foreground" : ""}`}>{e.name}</span>
                       <span className="block text-[11px] text-muted-foreground">{e.muscle} - {e.sets}x{e.reps}{e.weight ? ` @ ${e.weight}kg` : ""} - {e.rest}s rest</span>
