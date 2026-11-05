@@ -211,7 +211,7 @@ export default function Navbar({
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        <div className="hidden items-center gap-2 border-l border-border/70 pl-3 sm:flex">
+        <div className="hidden items-center gap-2 border-l border-border/70 pl-3 sm:flex md:hidden">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-[11px] font-bold text-foreground">{initials || <UserRound size={14} />}</span>
           <div className="leading-tight">
             <p className="text-xs font-semibold">{session.name}</p>
@@ -219,10 +219,28 @@ export default function Navbar({
           </div>
         </div>
 
-        <button onClick={onLogout} className={`${btnGhost} shrink-0 !p-2`} aria-label="Log out">
+        <button onClick={onLogout} className={`${btnGhost} shrink-0 !p-2 md:hidden`} aria-label="Log out">
           <LogOut size={16} />
         </button>
       </div>
     </header>
+  );
+}
+
+// Profile and log out, pinned to the bottom of the left sidebar from tablet width up.
+// Below that width the header shows them instead.
+export function SidebarUser({ session, onLogout }: { session: Session; onLogout: () => void }) {
+  const initials = session.name.split(" ").map((p) => p[0]).join("").slice(0, 2);
+  return (
+    <div className={`${panel} mt-auto hidden shrink-0 items-center gap-2.5 p-2.5 md:flex`}>
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary text-[11px] font-bold text-foreground">{initials || <UserRound size={14} />}</span>
+      <div className="min-w-0 flex-1 leading-tight">
+        <p className="truncate text-xs font-semibold">{session.name}</p>
+        <p className="truncate text-[11px] text-muted-foreground">{ROLE_LABEL[session.role]}</p>
+      </div>
+      <button onClick={onLogout} className={`${btnGhost} shrink-0 !p-2`} aria-label="Log out">
+        <LogOut size={16} />
+      </button>
+    </div>
   );
 }

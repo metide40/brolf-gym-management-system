@@ -7,7 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import * as api from "./api/mockApi";
 import { DEMO_ACCOUNTS } from "./mockData";
 import type { BodyMeasurement, ClassInput, Database, FitnessGoal, MaintenanceInput, MemberInput, PaymentStatus, PlanName, Role, Session, TrainerInput, WorkoutPlan } from "./types";
-import Navbar from "./components/Navbar";
+import Navbar, { SidebarUser } from "./components/Navbar";
 import { btnGhost, btnPrimary, input, panel } from "./components/Navbar";
 import { AdminOverview, MemberDirectory, ReceptionTerminal, SettingsView } from "./components/AdminReceptionViews";
 import { MemberClasses, MemberPass, MemberProgress, MemberWorkouts, TrainerView } from "./components/TrainerMemberViews";
@@ -93,7 +93,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
     <div className="min-h-[100dvh] bg-background text-foreground">
       <Navbar session={session} notifications={db?.notifications ?? []} theme={theme} onToggleTheme={onToggleTheme} onMarkRead={onMarkRead} onClear={onClearNotifications} onLogout={onLogout} />
       <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-4 py-5 md:flex-row">
-        <aside className="sticky top-16 z-30 -mx-4 bg-background px-4 py-2 md:top-20 md:z-auto md:mx-0 md:max-h-[calc(100dvh-6rem)] md:w-56 md:shrink-0 md:self-start md:overflow-y-auto md:bg-transparent md:px-0 md:py-0">
+        <aside className="sticky top-16 z-30 -mx-4 bg-background px-4 py-2 md:top-20 md:z-auto md:mx-0 md:flex md:h-[calc(100dvh-6.5rem)] md:w-56 md:shrink-0 md:flex-col md:self-start md:overflow-y-auto md:bg-transparent md:px-0 md:py-0">
           <div className="relative">
           <nav ref={navRef} aria-label="Main" className="flex snap-x gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] md:flex-col md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
             {items.map((t) => {
@@ -114,6 +114,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
           </nav>
           <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent md:hidden" />
           </div>
+          <SidebarUser session={session} onLogout={onLogout} />
         </aside>
 
         <main className="min-w-0 flex-1">
