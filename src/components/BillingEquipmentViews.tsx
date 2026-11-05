@@ -253,12 +253,14 @@ export function EquipmentView({
             </div>
             <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{e.note || "No open maintenance notes."}</p>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 space-y-2">
               <button onClick={() => onCycle(e.id)} className={`${btnGhost} text-xs`}><Check size={13} /> Advance status</button>
-              <button onClick={() => setLogging(e)} className={`${btnGhost} text-xs`}><NotebookPen size={13} /> Log maintenance</button>
-              <button onClick={() => setOpenHistory(openHistory === e.id ? null : e.id)} className={`${btnGhost} text-xs`} aria-expanded={openHistory === e.id}>
-                <History size={13} /> History ({e.log.length}) <ChevronDown size={13} className={openHistory === e.id ? "rotate-180" : ""} />
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => setLogging(e)} className={`${btnGhost} flex-auto whitespace-nowrap !px-2.5 text-xs`}><NotebookPen size={13} /> Log maintenance</button>
+                <button onClick={() => setOpenHistory(openHistory === e.id ? null : e.id)} className={`${btnGhost} flex-auto whitespace-nowrap !px-2.5 text-xs`} aria-expanded={openHistory === e.id}>
+                  <History size={13} /> History ({e.log.length}) <ChevronDown size={13} className={openHistory === e.id ? "rotate-180" : ""} />
+                </button>
+              </div>
             </div>
 
             {openHistory === e.id ? (
