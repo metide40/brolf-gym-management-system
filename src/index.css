@@ -43,6 +43,7 @@
    --primary is for fills (buttons, active states). --primary-text is the lighter
    red used for red TEXT on dark surfaces so it passes contrast. */
 :root {
+  color-scheme: light;
   --background: #f6f6f7;
   --foreground: #17181b;
   --card: #ffffff;
@@ -66,6 +67,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: #0f1012;
   --foreground: #f4f4f5;
   --card: #17191c;
