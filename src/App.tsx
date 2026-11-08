@@ -13,6 +13,7 @@ import { AdminOverview, MemberDirectory, ReceptionTerminal, SettingsView } from 
 import { MemberClasses, MemberPass, MemberProgress, MemberWorkouts, TrainerView } from "./components/TrainerMemberViews";
 import { ClassesBoard, EquipmentView, PaymentsView } from "./components/BillingEquipmentViews";
 import { TrainersView } from "./components/TrainersView";
+import LandingPage from "./components/LandingPage";
 
 type TabKey = "overview" | "members" | "trainers" | "payments" | "equipment" | "settings" | "terminal" | "classes" | "roster" | "pass" | "workouts" | "progress";
 
@@ -419,7 +420,7 @@ export default function App() {
     <>
       <Toaster position="top-right" theme={theme} closeButton />
       <Routes>
-        <Route path="/" element={<Navigate to={session ? homeFor(session.role) : "/login"} replace />} />
+        <Route path="/" element={session ? <Navigate to={homeFor(session.role)} replace /> : <LandingPage />} />
         <Route path="/login" element={<LoginRoute session={session} theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} onLogin={handleLogin} />} />
         <Route
           path="/:role/:section"
