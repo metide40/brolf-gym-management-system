@@ -38,7 +38,7 @@ export default function LandingPage() {
           <span className="grid h-10 w-10 place-items-center rounded-md bg-primary text-primary-foreground"><Dumbbell size={19} strokeWidth={2.4} /></span>
           <span className="font-display text-2xl font-bold uppercase tracking-[0.3em]">FitCore</span>
         </Link>
-        <Link to="/login" className="bg-[#d7263d] px-6 py-3 font-display text-lg font-semibold uppercase tracking-wider text-white transition hover:bg-[#b81f33]">Sign in</Link>
+        <Link to="/login" className="bg-[#d7263d] px-5 py-2 font-display text-base font-semibold uppercase tracking-wider text-white transition hover:bg-[#b81f33]">Sign in</Link>
       </header>
 
       <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col items-center justify-center px-4 pb-24 pt-8 text-center sm:px-8">
