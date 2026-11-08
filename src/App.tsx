@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
-import { AlertTriangle, ArrowLeft, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDashboard, Lock, QrCode, Settings as SettingsIcon, TrendingUp, UserCog, Users, Wrench } from "lucide-react";
+import { AlertTriangle, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDashboard, Lock, Moon, QrCode, Settings as SettingsIcon, Sun, TrendingUp, UserCog, Users, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import * as api from "./api/mockApi";
 import { DEMO_ACCOUNTS } from "./mockData";
@@ -473,17 +473,17 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-4 sm:px-6">
-        <Link to="/" className={`${btnGhost} !px-3 !py-1.5 text-xs`}><ArrowLeft size={14} /> Back to home</Link>
-        <button onClick={onToggleTheme} className={`${btnGhost} !px-2.5 !py-1.5 text-xs`}>{theme === "dark" ? "Light" : "Dark"} mode</button>
+        <Link to="/" aria-label="FitCore home" className="flex items-center gap-2.5">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground"><Dumbbell size={17} strokeWidth={2.4} /></span>
+          <span className="font-display text-2xl font-bold tracking-wide">FitCore</span>
+        </Link>
+        <button onClick={onToggleTheme} className={`${btnGhost} shrink-0 !p-2`} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+          {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
       </header>
 
       <main className="flex flex-1 items-center justify-center px-4 pb-10 pt-2">
         <div className="w-full max-w-md">
-          <Link to="/" aria-label="FitCore home" className="mb-5 flex items-center justify-center gap-2.5">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground"><Dumbbell size={19} strokeWidth={2.4} /></span>
-            <span className="font-display text-2xl font-bold tracking-wide">FitCore</span>
-          </Link>
-
           <div className={`${panel} bg-card p-6 sm:p-8`}>
             <h1 className="font-display text-3xl font-semibold">Sign in</h1>
 
