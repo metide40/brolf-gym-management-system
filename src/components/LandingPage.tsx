@@ -47,7 +47,7 @@ export default function LandingPage() {
           <motion.span {...rise(0.4)} className="block text-white">{HEADLINE[1]}</motion.span>
         </h1>
         <motion.div {...rise(0.7)} className="mt-10">
-          <Link to="/login" className="inline-block border border-white/80 px-14 py-4 font-display text-xl font-semibold uppercase tracking-wider text-white transition hover:border-[#d7263d] hover:bg-[#d7263d]">Get started</Link>
+          <Link to="/login" className="inline-block border border-white/80 px-12 py-3.5 font-display text-lg font-semibold uppercase tracking-wider text-white transition hover:border-[#d7263d] hover:bg-[#d7263d]">Get started</Link>
         </motion.div>
       </div>
     </main>
