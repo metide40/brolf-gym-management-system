@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
-import { AlertTriangle, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDashboard, Lock, QrCode, Settings as SettingsIcon, TrendingUp, UserCog, Users, Wrench } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDashboard, Lock, QrCode, Settings as SettingsIcon, TrendingUp, UserCog, Users, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import * as api from "./api/mockApi";
 import { DEMO_ACCOUNTS } from "./mockData";
@@ -51,13 +51,6 @@ const ROUTES: Record<Role, RouteItem[]> = {
 
 const ROLE_LABEL: Record<Role, string> = { admin: "Administrator", reception: "Reception", trainer: "Trainer", member: "Member" };
 
-const ROLE_BLURB: Record<Role, string> = {
-  admin: "Full access to members, billing, equipment and gym settings.",
-  reception: "Front desk: check-in, member records, class bookings and dues.",
-  trainer: "Your roster, class schedule and workout programs.",
-  member: "Your pass, class bookings, programs and progress.",
-};
-
 const homeFor = (role: Role) => `/${role}/${ROUTES[role][0].path}`;
 
 type WorkspaceProps = {
@@ -68,11 +61,12 @@ type WorkspaceProps = {
   onMarkRead: () => void;
   onClearNotifications: () => void;
   onLogout: () => void;
+  signedOutTo: string;
   renderSection: (key: TabKey) => ReactNode;
 };
 
 // Route guard + page shell. Anything under /<role>/<section> goes through here.
-function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotifications, onLogout, renderSection }: WorkspaceProps) {
+function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotifications, onLogout, signedOutTo, renderSection }: WorkspaceProps) {
   const { role, section } = useParams();
   const location = useLocation();
   const navRef = useRef<HTMLElement>(null);
@@ -82,7 +76,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
     navRef.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ inline: "center", block: "nearest" });
   }, [location.pathname]);
 
-  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!session) return <Navigate to={signedOutTo} replace state={signedOutTo === "/login" ? { from: location.pathname } : undefined} />;
 
   const items = ROUTES[session.role];
   const current = role === session.role ? items.find((r) => r.path === section) : undefined;
@@ -175,6 +169,8 @@ export default function App() {
   const [db, setDb] = useState<Database | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [booted, setBooted] = useState(false);
+  // After an explicit sign-out, send the visitor to the landing page. Deep links while signed out still go to /login.
+  const justSignedOut = useRef(false);
   const [tests, setTests] = useState<{ name: string; passed: boolean; detail: string }[]>([]);
   const [runningTests, setRunningTests] = useState(false);
 
@@ -204,11 +200,13 @@ export default function App() {
 
   const handleLogin = async (email: string, password: string) => {
     const next = await api.login(email, password);
+    justSignedOut.current = false;
     setSession(next);
     toast.success(`Signed in as ${next.name}`);
   };
 
   const handleLogout = async () => {
+    justSignedOut.current = true;
     await api.logout();
     setSession(null);
   };
@@ -433,6 +431,7 @@ export default function App() {
               onMarkRead={() => { if (session) void mutate(() => api.markNotificationsRead(session)); }}
               onClearNotifications={() => { if (session) void mutate(() => api.clearNotifications(session)); }}
               onLogout={handleLogout}
+              signedOutTo={justSignedOut.current ? "/" : "/login"}
               renderSection={renderSection}
             />
           }
@@ -472,68 +471,54 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
-      <div className="mx-auto grid min-h-[100dvh] max-w-[1200px] items-center gap-10 px-4 py-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
-        <div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground"><Dumbbell size={19} strokeWidth={2.4} /></span>
-              <p className="font-display text-2xl font-bold tracking-wide">FitCore</p>
-            </div>
-            <button onClick={onToggleTheme} className={`${btnGhost} !px-2.5 !py-1.5 text-xs`}>{theme === "dark" ? "Light" : "Dark"} mode</button>
-          </div>
+    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
+      <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-4 sm:px-6">
+        <Link to="/" className={`${btnGhost} !px-3 !py-1.5 text-xs`}><ArrowLeft size={14} /> Back to home</Link>
+        <button onClick={onToggleTheme} className={`${btnGhost} !px-2.5 !py-1.5 text-xs`}>{theme === "dark" ? "Light" : "Dark"} mode</button>
+      </header>
 
-          <h1 className="mt-12 font-display text-5xl font-semibold leading-[1.02] sm:text-6xl xl:text-7xl">
-            Run the floor.<br />Coach the room.
-          </h1>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground">
-            Memberships, check-in, classes, billing and equipment in one workspace, with a separate view for each person on your team.
-          </p>
+      <main className="flex flex-1 items-center justify-center px-4 pb-10 pt-2">
+        <div className="w-full max-w-md">
+          <Link to="/" aria-label="FitCore home" className="mb-5 flex items-center justify-center gap-2.5">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground"><Dumbbell size={19} strokeWidth={2.4} /></span>
+            <span className="font-display text-2xl font-bold tracking-wide">FitCore</span>
+          </Link>
 
-          <dl className="mt-9 grid max-w-lg gap-x-8 gap-y-4 sm:grid-cols-2">
-            {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
-              <div key={r} className="border-l-2 border-primary/60 pl-3">
-                <dt className="text-sm font-semibold">{ROLE_LABEL[r]}</dt>
-                <dd className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{ROLE_BLURB[r]}</dd>
+          <div className={`${panel} bg-card p-6 sm:p-8`}>
+            <h1 className="font-display text-3xl font-semibold">Sign in</h1>
+
+            <form
+              className="mt-5 grid gap-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                submit();
+              }}
+            >
+              <label className="text-sm font-medium text-muted-foreground">Email<input type="email" autoComplete="username" className={`${input} mt-1`} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@fitcore.demo" /></label>
+              <label className="text-sm font-medium text-muted-foreground">Password<input type="password" autoComplete="current-password" className={`${input} mt-1`} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+              {error ? (
+                <p role="alert" className="flex items-start gap-1.5 rounded-lg bg-amber-500/12 px-3 py-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                  <AlertTriangle size={13} className="mt-0.5 shrink-0" /> {error}
+                </p>
+              ) : null}
+              <button type="submit" disabled={busy} className={`${btnPrimary} mt-1 w-full`}>{busy ? "Signing in..." : "Sign in"}</button>
+            </form>
+
+            <div className="mt-6 border-t border-border pt-4">
+              <p className="text-sm font-semibold">Demo accounts</p>
+              <p className="mt-1 text-xs text-muted-foreground">This is a demo build. Accounts are simulated and data stays in this browser. Password for all: fitcore123</p>
+              <div className="mt-3 grid gap-1.5">
+                {DEMO_ACCOUNTS.map((a, i) => (
+                  <button key={a.role} onClick={() => signInAs(i)} disabled={busy} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-left text-sm transition hover:border-primary/50 hover:bg-secondary/60 disabled:opacity-50">
+                    <span className="font-semibold">{a.title}</span>
+                    <span className="truncate text-xs text-muted-foreground">{a.email}</span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </dl>
-        </div>
-
-        <div className={`${panel} bg-card p-6`}>
-          <h2 className="font-display text-3xl font-semibold">Sign in</h2>
-
-          <form
-            className="mt-5 grid gap-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-          >
-            <label className="text-sm font-medium text-muted-foreground">Email<input type="email" autoComplete="username" className={`${input} mt-1`} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@fitcore.demo" /></label>
-            <label className="text-sm font-medium text-muted-foreground">Password<input type="password" autoComplete="current-password" className={`${input} mt-1`} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
-            {error ? (
-              <p role="alert" className="flex items-start gap-1.5 rounded-lg bg-amber-500/12 px-3 py-2 text-xs font-medium text-amber-600 dark:text-amber-400">
-                <AlertTriangle size={13} className="mt-0.5 shrink-0" /> {error}
-              </p>
-            ) : null}
-            <button type="submit" disabled={busy} className={`${btnPrimary} mt-1 w-full`}>{busy ? "Signing in..." : "Sign in"}</button>
-          </form>
-
-          <div className="mt-6 border-t border-border pt-4">
-            <p className="text-sm font-semibold">Demo accounts</p>
-            <p className="mt-1 text-xs text-muted-foreground">This is a demo build. Accounts are simulated and data stays in this browser. Password for all: fitcore123</p>
-            <div className="mt-3 grid gap-1.5">
-              {DEMO_ACCOUNTS.map((a, i) => (
-                <button key={a.role} onClick={() => signInAs(i)} disabled={busy} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-left text-sm transition hover:border-primary/50 hover:bg-secondary/60 disabled:opacity-50">
-                  <span className="font-semibold">{a.title}</span>
-                  <span className="truncate text-xs text-muted-foreground">{a.email}</span>
-                </button>
-              ))}
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
