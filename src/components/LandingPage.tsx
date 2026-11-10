@@ -42,7 +42,7 @@ export default function LandingPage() {
       </header>
 
       <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col items-center justify-center px-4 pb-24 pt-8 text-center sm:px-8">
-        <h1 className="font-headline text-5xl font-normal uppercase leading-[0.95] tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:text-7xl lg:text-8xl xl:text-9xl">
+        <h1 className="font-headline text-4xl font-normal uppercase leading-[0.95] tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:text-5xl lg:text-6xl xl:text-8xl">
           <motion.span {...rise(0.2)} className="block text-[#d7263d]">{HEADLINE[0]}</motion.span>
           <motion.span {...rise(0.4)} className="mt-1 block text-[0.85em] text-white sm:mt-2">{HEADLINE[1]}</motion.span>
         </h1>
