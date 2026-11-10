@@ -44,7 +44,7 @@ export default function LandingPage() {
       <div className="mx-auto flex w-full max-w-[1400px] flex-1 flex-col items-center justify-center px-4 pb-24 pt-8 text-center sm:px-8">
         <h1 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-wide drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] sm:text-6xl lg:text-7xl xl:text-8xl">
           <motion.span {...rise(0.2)} className="block text-[#d7263d]">{HEADLINE[0]}</motion.span>
-          <motion.span {...rise(0.4)} className="mt-1 block text-[0.7em] text-white sm:mt-2">{HEADLINE[1]}</motion.span>
+          <motion.span {...rise(0.4)} className="mt-1 block text-[0.85em] text-white sm:mt-2">{HEADLINE[1]}</motion.span>
         </h1>
         <motion.div {...rise(0.7)} className="mt-10">
           <Link to="/login" className="inline-block border border-white/80 px-12 py-3.5 font-display text-lg font-semibold uppercase tracking-wider text-white transition hover:border-[#d7263d] hover:bg-[#d7263d]">Get started</Link>
