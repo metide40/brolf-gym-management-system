@@ -19,25 +19,25 @@ npm run build      # type-check and production build
 
 Password for every account: `fitcore123`
 
-| Role | Email |
-|---|---|
-| Administrator | admin@fitcore.io |
-| Reception | reception@fitcore.io |
-| Trainer | trainer@fitcore.io |
-| Member | member@fitcore.io |
+| Role          | Email                |
+| ------------- | -------------------- |
+| Administrator | admin@fitcore.io     |
+| Reception     | reception@fitcore.io |
+| Trainer       | trainer@fitcore.io   |
+| Member        | member@fitcore.io    |
 
 The login screen has one-click buttons for each account. To change role, sign out and sign in with another account.
 
 ## Pages and access
 
-Every screen has its own URL in the form `/<role>/<section>`. Signed-out visitors are sent to `/login`, and a signed-in user who opens another role's URL sees an "No access to this area" page.
+Every screen has its own URL in the form `/<role>/<section>`. Signed-out visitors are sent to `/login`, and a signed-in user who opens another role's URL sees an "No access to this area" page. Signing out returns you to `/login`.
 
-| Role | Pages |
-|---|---|
+| Role          | Pages                                                                                                                             |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Administrator | `/admin/overview`, `/admin/members`, `/admin/trainers`, `/admin/billing`, `/admin/classes`, `/admin/equipment`, `/admin/settings` |
-| Reception | `/reception/check-in`, `/reception/members`, `/reception/classes`, `/reception/billing` |
-| Trainer | `/trainer/roster`, `/trainer/schedule`, `/trainer/equipment` |
-| Member | `/member/pass`, `/member/classes`, `/member/programs`, `/member/progress` |
+| Reception     | `/reception/check-in`, `/reception/members`, `/reception/classes`, `/reception/billing`                                           |
+| Trainer       | `/trainer/roster`, `/trainer/schedule`, `/trainer/equipment`                                                                      |
+| Member        | `/member/pass`, `/member/classes`, `/member/programs`, `/member/progress`                                                         |
 
 ## Features
 

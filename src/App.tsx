@@ -169,8 +169,6 @@ export default function App() {
   const [db, setDb] = useState<Database | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [booted, setBooted] = useState(false);
-  // After an explicit sign-out, send the visitor to the landing page. Deep links while signed out still go to /login.
-  const justSignedOut = useRef(false);
   const [tests, setTests] = useState<{ name: string; passed: boolean; detail: string }[]>([]);
   const [runningTests, setRunningTests] = useState(false);
 
@@ -200,13 +198,11 @@ export default function App() {
 
   const handleLogin = async (email: string, password: string) => {
     const next = await api.login(email, password);
-    justSignedOut.current = false;
     setSession(next);
     toast.success(`Signed in as ${next.name}`);
   };
 
   const handleLogout = async () => {
-    justSignedOut.current = true;
     await api.logout();
     setSession(null);
   };
@@ -431,7 +427,7 @@ export default function App() {
               onMarkRead={() => { if (session) void mutate(() => api.markNotificationsRead(session)); }}
               onClearNotifications={() => { if (session) void mutate(() => api.clearNotifications(session)); }}
               onLogout={handleLogout}
-              signedOutTo={justSignedOut.current ? "/" : "/login"}
+              signedOutTo="/login"
               renderSection={renderSection}
             />
           }
