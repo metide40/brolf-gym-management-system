@@ -19,7 +19,7 @@ type TabKey = "overview" | "members" | "trainers" | "payments" | "equipment" | "
 
 type RouteItem = { path: string; key: TabKey; label: string; icon: LucideIcon };
 
-// Every screen has its own URL: /<role>/<section>. The first entry is the role's home page.
+// Every screen has its own URL: /<role>/<section> The first entry is the role's home page.
 const ROUTES: Record<Role, RouteItem[]> = {
   admin: [
     { path: "overview", key: "overview", label: "Overview", icon: LayoutDashboard },
@@ -472,7 +472,7 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
-      <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-4 sm:px-6">
+      <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6">
         <Link to="/" aria-label="FitCore home" className="flex items-center gap-2.5">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground"><Dumbbell size={17} strokeWidth={2.4} /></span>
           <span className="font-display text-2xl font-bold tracking-wide">FitCore</span>
@@ -482,13 +482,13 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
         </button>
       </header>
 
-      <main className="flex flex-1 items-center justify-center px-4 pb-10 pt-2">
+      <main className="flex flex-1 items-center justify-center px-4 pb-4 pt-0">
         <div className="w-full max-w-md">
-          <div className={`${panel} bg-card p-6 sm:p-8`}>
-            <h1 className="font-display text-3xl font-semibold">Sign in</h1>
+          <div className={`${panel} bg-card p-5 sm:p-6`}>
+            <h1 className="font-display text-2xl font-semibold">Sign in</h1>
 
             <form
-              className="mt-5 grid gap-3"
+              className="mt-3 grid gap-2.5"
               onSubmit={(e) => {
                 e.preventDefault();
                 submit();
@@ -504,14 +504,13 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
               <button type="submit" disabled={busy} className={`${btnPrimary} mt-1 w-full`}>{busy ? "Signing in..." : "Sign in"}</button>
             </form>
 
-            <div className="mt-6 border-t border-border pt-4">
+            <div className="mt-4 border-t border-border pt-3">
               <p className="text-sm font-semibold">Demo accounts</p>
-              <p className="mt-1 text-xs text-muted-foreground">This is a demo build. Accounts are simulated and data stays in this browser. Password for all: fitcore123</p>
-              <div className="mt-3 grid gap-1.5">
+              <p className="mt-0.5 text-xs text-muted-foreground">Simulated accounts. Password for all: fitcore123</p>
+              <div className="mt-2 grid grid-cols-2 gap-1.5">
                 {DEMO_ACCOUNTS.map((a, i) => (
-                  <button key={a.role} onClick={() => signInAs(i)} disabled={busy} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-left text-sm transition hover:border-primary/50 hover:bg-secondary/60 disabled:opacity-50">
-                    <span className="font-semibold">{a.title}</span>
-                    <span className="truncate text-xs text-muted-foreground">{a.email}</span>
+                  <button key={a.role} type="button" onClick={() => signInAs(i)} disabled={busy} title={a.email} className="rounded-lg border border-border px-3 py-2 text-center text-sm font-semibold capitalize transition hover:border-primary/50 hover:bg-secondary/60 disabled:opacity-50">
+                    {a.role}
                   </button>
                 ))}
               </div>
