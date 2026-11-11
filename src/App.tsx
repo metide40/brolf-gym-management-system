@@ -502,7 +502,6 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
 
             <div className="mt-4 border-t border-border pt-3">
               <p className="text-sm font-semibold">Demo accounts</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Simulated accounts. Password for all: fitcore123</p>
               <div className="mt-2 grid grid-cols-2 gap-1.5">
                 {DEMO_ACCOUNTS.map((a, i) => (
                   <button key={a.role} type="button" onClick={() => signInAs(i)} disabled={busy} title={a.email} className="rounded-lg border border-border px-3 py-2 text-center text-sm font-semibold capitalize transition hover:border-primary/50 hover:bg-secondary/60 disabled:opacity-50">
