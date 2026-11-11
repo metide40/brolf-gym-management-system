@@ -151,8 +151,8 @@ export function getSession(): Session | null {
 export async function login(email: string, password: string): Promise<Session> {
   await delay();
   const account = DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
-  if (!account) throw new Error("No account matches that email address.");
-  if (account.password !== password) throw new Error("Incorrect password. Check it and try again.");
+  if (!account) throw new Error("Invalid email or password.");
+  if (account.password !== password) throw new Error("Invalid email or password.");
   const db = read();
   const session: Session = { role: account.role, name: account.name, email: account.email };
   if (account.role === "member") session.memberId = db.members[0].id;
