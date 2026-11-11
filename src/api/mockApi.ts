@@ -1,5 +1,6 @@
 import { DEMO_ACCOUNTS, SEED_TRAINERS, deriveStatus, legacyMaintenanceLog, seedDatabase } from "../mockData";
 import { classSchema, firstError, maintenanceSchema, maxCapacitySchema, trainerSchema } from "../lib/schemas";
+import { createCredential, validateNewPassword, type StoredCredential } from "../lib/credentials";
 import type {
   AppNotification,
   ClassInput,
@@ -27,6 +28,23 @@ import { clearAllFor, markAllReadFor, normalizeNotification, type StoredNotifica
 
 const DB_KEY = "fitcore.db.v1";
 const SESSION_KEY = "fitcore.session.v1";
+const CREDENTIALS_KEY = "fitcore.credentials.v1";
+
+function readCredentials(): Record<string, StoredCredential> {
+  try {
+    const raw = localStorage.getItem(CREDENTIALS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return parsed as Record<string, StoredCredential>;
+  } catch {
+    return {};
+  }
+}
+
+function writeCredentials(map: Record<string, StoredCredential>): void {
+  localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(map));
+}
 
 const delay = (min = 160, max = 340) => new Promise<void>((r) => setTimeout(r, min + Math.random() * (max - min)));
 const uid = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -167,14 +185,31 @@ export async function logout(): Promise<void> {
 
 export async function resetDemoData(): Promise<Database> {
   await delay(320, 520);
+  localStorage.removeItem(CREDENTIALS_KEY);
   return write(seedDatabase());
 }
 
-export async function saveMember(input: MemberInput): Promise<Database> {
+export async function saveMember(input: MemberInput, password?: string): Promise<Database> {
   await delay();
   const db = read();
+  const email = input.email.trim();
+  const normalizedEmail = email.toLowerCase();
+  const existingId = input.id ?? null;
+
+  const duplicate = db.members.find((m) => m.email.trim().toLowerCase() === normalizedEmail && m.id !== existingId);
+  if (duplicate) throw new Error("Another member already uses this email address.");
+
+  if (DEMO_ACCOUNTS.some((a) => a.email.toLowerCase() === normalizedEmail)) throw new Error("That email address is reserved for a demo account.");
+
+  const passwordProvided = typeof password === "string" && password.trim() !== "";
+  if (passwordProvided) {
+    const message = validateNewPassword(password);
+    if (message) throw new Error(message);
+  }
+
   const member: Member = {
     ...input,
+    email,
     id: input.id ?? `MEM-${String(db.members.length + 1).padStart(3, "0")}-${Math.floor(Math.random() * 900 + 100)}`,
     code: input.id ? db.members.find((m) => m.id === input.id)?.code ?? `FC-${2000 + db.members.length}` : `FC-${2000 + db.members.length}`,
     status: deriveStatus(input.endDate, input.frozen),
@@ -182,7 +217,16 @@ export async function saveMember(input: MemberInput): Promise<Database> {
   const idx = db.members.findIndex((m) => m.id === member.id);
   if (idx >= 0) db.members[idx] = member;
   else db.members.unshift(member);
-  return write(db);
+  const saved = write(db);
+
+  if (passwordProvided) {
+    const stored = readCredentials();
+    const credential = await createCredential(password);
+    stored[member.id] = credential;
+    writeCredentials(stored);
+  }
+
+  return saved;
 }
 
 export async function deleteMember(id: string): Promise<Database> {
@@ -191,6 +235,9 @@ export async function deleteMember(id: string): Promise<Database> {
   db.members = db.members.filter((m) => m.id !== id);
   db.bookings = db.bookings.filter((b) => b.memberId !== id);
   db.waitlist = db.waitlist.filter((w) => w.memberId !== id);
+  const credentials = readCredentials();
+  delete credentials[id];
+  writeCredentials(credentials);
   return write(db);
 }
 
