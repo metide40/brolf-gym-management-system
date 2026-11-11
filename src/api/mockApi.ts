@@ -153,9 +153,8 @@ export async function login(email: string, password: string): Promise<Session> {
   const account = DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
   if (!account) throw new Error("Invalid email or password.");
   if (account.password !== password) throw new Error("Invalid email or password.");
-  const db = read();
   const session: Session = { role: account.role, name: account.name, email: account.email };
-  if (account.role === "member") session.memberId = db.members[0].id;
+  if (account.role === "member") session.memberId = "MEM-001";
   if (account.role === "trainer") session.trainerId = "TR-01";
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
