@@ -17,8 +17,8 @@ describe("member form validation", () => {
     expect(firstError(memberFormSchema.safeParse(validMember))).toBeNull();
   });
 
-  it("accepts an empty phone number because it is optional", () => {
-    expect(firstError(memberFormSchema.safeParse({ ...validMember, phone: "" }))).toBeNull();
+  it("rejects an empty phone number because it is required", () => {
+    expect(firstError(memberFormSchema.safeParse({ ...validMember, phone: "" }))).toBe("Enter the member's phone number.");
   });
 
   it("rejects a name that is too short", () => {

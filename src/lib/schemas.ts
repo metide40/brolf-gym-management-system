@@ -14,7 +14,8 @@ export const memberFormSchema = z.object({
   phone: z
     .string()
     .trim()
-    .refine((v) => v === "" || /^[+()\d\s-]{7,20}$/.test(v), "Phone can only contain digits, spaces, + - ( ) and must be 7 to 20 characters."),
+    .min(1, "Enter the member's phone number.")
+    .regex(/^[+()\d\s-]{7,20}$/, "Phone can only contain digits, spaces, + - ( ) and must be 7 to 20 characters."),
   plan: z.enum(["Monthly", "Quarterly", "Annual", "VIP"], { message: "Choose a plan." }),
   startDate: isoDate,
   trainerId: z.string().min(1, "Choose a trainer."),

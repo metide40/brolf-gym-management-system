@@ -215,7 +215,7 @@ export function MemberDirectory({
         id: editing?.id,
         name: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim() || "+1 (415) 555-0100",
+        phone: form.phone.trim(),
         plan: form.plan,
         startDate: form.startDate,
         endDate: end.toISOString().slice(0, 10),
@@ -321,7 +321,7 @@ export function MemberDirectory({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-muted-foreground">Full name<input className={`${input} mt-1`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Jordan Reyes" /></label>
           <label className="text-xs font-semibold text-muted-foreground">Email<input className={`${input} mt-1`} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="name@mail.com" /></label>
-          <label className="text-xs font-semibold text-muted-foreground">Phone<input className={`${input} mt-1`} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+1 (415) 555-0100" /></label>
+          <label className="text-xs font-semibold text-muted-foreground">Phone<input className={`${input} mt-1`} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+251 91 123 4567" /></label>
           <label className="text-xs font-semibold text-muted-foreground">Plan
             <select className={`${input} mt-1`} value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value as PlanName })}>
               {PLAN_NAMES.map((p) => <option key={p} value={p}>{p} - ${PLANS[p].price}</option>)}
