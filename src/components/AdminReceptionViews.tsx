@@ -202,6 +202,7 @@ export function MemberDirectory({
   const submit = async () => {
     const problem = firstError(memberFormSchema.safeParse(form));
     if (problem) return setError(problem);
+    if (!editing && !form.password) return setError("Enter a temporary password so the member can sign in.");
     if (form.password) {
       const passwordProblem = validateNewPassword(form.password);
       if (passwordProblem) return setError(passwordProblem);
@@ -335,12 +336,12 @@ export function MemberDirectory({
           </label>
           <label className="text-xs font-semibold text-muted-foreground sm:col-span-2">Primary goal<input className={`${input} mt-1`} value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} /></label>
           <label className="text-xs font-semibold text-muted-foreground sm:col-span-2">
-            {editing ? "Reset password (optional)" : "Temporary password (optional)"}
+            {editing ? "Set or reset password (optional)" : "Temporary password"}
             <div className="relative mt-1">
-              <input type={showPassword ? "text" : "password"} autoComplete="new-password" className={`${input} pr-16`} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editing ? "Leave blank to keep the current password" : "Lets the member sign in with their email"} />
+              <input type={showPassword ? "text" : "password"} autoComplete="new-password" className={`${input} pr-16`} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editing ? "Leave blank to keep the current password" : "At least 8 characters, with a letter and a number"} />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-2 px-2 text-[11px] font-semibold text-muted-foreground hover:text-foreground">{showPassword ? "Hide" : "Show"}</button>
             </div>
-            <span className="mt-1 block text-[11px] font-normal">At least 8 characters, with a letter and a number. Share it with the member privately.</span>
+            <span className="mt-1 block text-[11px] font-normal">{editing ? "Leave blank to keep the current password. Members who have no password yet can be given one here." : "The member signs in with their email and this password. Share it with them privately."}</span>
           </label>
           <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground sm:col-span-2">
             <input type="checkbox" checked={form.frozen} onChange={(e) => setForm({ ...form, frozen: e.target.checked })} className="h-4 w-4 accent-[#d7263d]" /> Membership frozen
