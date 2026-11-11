@@ -324,7 +324,7 @@ export default function App() {
         return (
           <MemberDirectory
             db={db}
-            onSave={(member: MemberInput) => mutate(() => api.saveMember(member), "Member record saved")}
+            onSave={(member: MemberInput, password?: string) => mutateOk(() => api.saveMember(member, password), password ? "Member saved and password set" : "Member record saved")}
             onDelete={(id: string) => mutate(() => api.deleteMember(id), "Member removed")}
             onFreeze={(id: string) => mutate(() => api.toggleMemberFreeze(id), "Membership status updated")}
             onRenew={(id: string, days: number) => mutate(() => api.renewMembership(id, days), `Membership extended by ${days} days`)}

@@ -8,6 +8,7 @@ import { downloadCsv } from "../lib/csv";
 import { STAY_WINDOW_MS, currentlyInGym } from "../api/mockApi";
 import type { Database, Member, MemberInput, PlanName } from "../types";
 import { EmptyState, Modal, Pill, SectionTitle, Stat, btn, btnGhost, btnPrimary, input, panel } from "./Navbar";
+import { validateNewPassword } from "../lib/credentials";
 
 const BRAND = "#d7263d";
 // Plan colours: red marks the top tier (VIP); the other plans use clearly separated greys.
@@ -155,8 +156,8 @@ export function AdminOverview({ db }: { db: Database }) {
   );
 }
 
-type FormState = { name: string; email: string; phone: string; plan: PlanName; startDate: string; trainerId: string; goal: string; frozen: boolean };
-const emptyForm = (trainerId: string): FormState => ({ name: "", email: "", phone: "", plan: "Monthly", startDate: new Date().toISOString().slice(0, 10), trainerId, goal: "General fitness", frozen: false });
+type FormState = { name: string; email: string; phone: string; plan: PlanName; startDate: string; trainerId: string; goal: string; frozen: boolean; password: string };
+const emptyForm = (trainerId: string): FormState => ({ name: "", email: "", phone: "", plan: "Monthly", startDate: new Date().toISOString().slice(0, 10), trainerId, goal: "General fitness", frozen: false, password: "" });
 
 export function MemberDirectory({
   db,
@@ -167,7 +168,7 @@ export function MemberDirectory({
   onOpenInvoice,
 }: {
   db: Database;
-  onSave: (input: MemberInput) => Promise<void>;
+  onSave: (input: MemberInput, password?: string) => Promise<boolean>;
   onDelete: (id: string) => Promise<void>;
   onFreeze: (id: string) => Promise<void>;
   onRenew: (id: string, days: number) => Promise<void>;
@@ -180,6 +181,7 @@ export function MemberDirectory({
   const [form, setForm] = useState<FormState>(emptyForm(db.trainers[0]?.id ?? ""));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const statuses = ["All", ...Array.from(new Set(db.members.map((m) => m.status)))];
   const filtered = db.members.filter((m) => {
@@ -188,23 +190,28 @@ export function MemberDirectory({
     return matchQ && (status === "All" || m.status === status);
   });
 
-  const openCreate = () => { setEditing(null); setForm(emptyForm(db.trainers[0]?.id ?? "")); setError(""); setOpen(true); };
+  const openCreate = () => { setEditing(null); setForm(emptyForm(db.trainers[0]?.id ?? "")); setError(""); setShowPassword(false); setOpen(true); };
   const openEdit = (m: Member) => {
     setEditing(m);
-    setForm({ name: m.name, email: m.email, phone: m.phone, plan: m.plan, startDate: m.startDate, trainerId: m.trainerId, goal: m.goal, frozen: m.frozen });
+    setForm({ name: m.name, email: m.email, phone: m.phone, plan: m.plan, startDate: m.startDate, trainerId: m.trainerId, goal: m.goal, frozen: m.frozen, password: "" });
     setError("");
+    setShowPassword(false);
     setOpen(true);
   };
 
   const submit = async () => {
     const problem = firstError(memberFormSchema.safeParse(form));
     if (problem) return setError(problem);
+    if (form.password) {
+      const passwordProblem = validateNewPassword(form.password);
+      if (passwordProblem) return setError(passwordProblem);
+    }
     setSaving(true);
     setError("");
     const end = new Date(`${form.startDate}T12:00:00`);
     end.setDate(end.getDate() + PLANS[form.plan].days);
     try {
-      await onSave({
+      const ok = await onSave({
         id: editing?.id,
         name: form.name.trim(),
         email: form.email.trim(),
@@ -217,8 +224,11 @@ export function MemberDirectory({
         joinedAt: editing?.joinedAt ?? form.startDate,
         goal: form.goal,
         notes: editing?.notes ?? "",
-      });
-      setOpen(false);
+      }, form.password || undefined);
+      if (ok) {
+        setForm((f) => ({ ...f, password: "" }));
+        setOpen(false);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to save member.");
     } finally {
@@ -324,6 +334,14 @@ export function MemberDirectory({
             </select>
           </label>
           <label className="text-xs font-semibold text-muted-foreground sm:col-span-2">Primary goal<input className={`${input} mt-1`} value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} /></label>
+          <label className="text-xs font-semibold text-muted-foreground sm:col-span-2">
+            {editing ? "Reset password (optional)" : "Temporary password (optional)"}
+            <div className="relative mt-1">
+              <input type={showPassword ? "text" : "password"} autoComplete="new-password" className={`${input} pr-16`} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={editing ? "Leave blank to keep the current password" : "Lets the member sign in with their email"} />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-2 px-2 text-[11px] font-semibold text-muted-foreground hover:text-foreground">{showPassword ? "Hide" : "Show"}</button>
+            </div>
+            <span className="mt-1 block text-[11px] font-normal">At least 8 characters, with a letter and a number. Share it with the member privately.</span>
+          </label>
           <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground sm:col-span-2">
             <input type="checkbox" checked={form.frozen} onChange={(e) => setForm({ ...form, frozen: e.target.checked })} className="h-4 w-4 accent-[#d7263d]" /> Membership frozen
           </label>
