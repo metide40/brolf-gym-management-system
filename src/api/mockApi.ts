@@ -1,6 +1,6 @@
 import { DEMO_ACCOUNTS, SEED_TRAINERS, deriveStatus, legacyMaintenanceLog, seedDatabase } from "../mockData";
 import { classSchema, firstError, maintenanceSchema, maxCapacitySchema, trainerSchema } from "../lib/schemas";
-import { createCredential, validateNewPassword, type StoredCredential } from "../lib/credentials";
+import { createCredential, validateNewPassword, verifyCredential, type StoredCredential } from "../lib/credentials";
 import type {
   AppNotification,
   ClassInput,
@@ -156,11 +156,16 @@ export function getSession(): Session | null {
     // Mock-auth safeguard: a stored session is only trusted if it matches a known account.
     // (A real backend would verify a signed token instead.)
     const account = DEMO_ACCOUNTS.find((a) => a.email === stored.email && a.role === stored.role);
-    if (!account) {
-      localStorage.removeItem(SESSION_KEY);
-      return null;
+    if (account) return stored;
+
+    if (stored.role === "member" && stored.memberId) {
+      const db = read();
+      const member = db.members.find((m) => m.id === stored.memberId);
+      if (member && member.email.trim().toLowerCase() === stored.email.trim().toLowerCase() && readCredentials()[member.id]) return stored;
     }
-    return stored;
+
+    localStorage.removeItem(SESSION_KEY);
+    return null;
   } catch {
     return null;
   }
@@ -168,12 +173,24 @@ export function getSession(): Session | null {
 
 export async function login(email: string, password: string): Promise<Session> {
   await delay();
-  const account = DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
-  if (!account) throw new Error("Invalid email or password.");
-  if (account.password !== password) throw new Error("Invalid email or password.");
-  const session: Session = { role: account.role, name: account.name, email: account.email };
-  if (account.role === "member") session.memberId = "MEM-001";
-  if (account.role === "trainer") session.trainerId = "TR-01";
+  const normalizedEmail = email.trim().toLowerCase();
+  const account = DEMO_ACCOUNTS.find((a) => a.email.toLowerCase() === normalizedEmail);
+
+  if (account) {
+    if (account.password !== password) throw new Error(INVALID_LOGIN);
+    const session: Session = { role: account.role, name: account.name, email: account.email };
+    if (account.role === "member") session.memberId = "MEM-001";
+    if (account.role === "trainer") session.trainerId = "TR-01";
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    return session;
+  }
+
+  const member = read().members.find((m) => m.email.trim().toLowerCase() === normalizedEmail);
+  const credential = member ? readCredentials()[member.id] : undefined;
+  const valid = await verifyCredential(password, credential ?? DUMMY_CREDENTIAL);
+  if (!member || !credential || !valid) throw new Error(INVALID_LOGIN);
+
+  const session: Session = { role: "member", name: member.name, email: member.email, memberId: member.id };
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
@@ -671,3 +688,10 @@ export async function runTestSuite(): Promise<TestResult[]> {
 
   return results;
 }
+
+const INVALID_LOGIN = "Invalid email or password.";
+const DUMMY_CREDENTIAL: StoredCredential = {
+  salt: btoa(String.fromCharCode(...new Uint8Array(16).fill(0))),
+  hash: btoa(String.fromCharCode(...new Uint8Array(32).fill(0))),
+  iterations: 100000,
+};
