@@ -1,8 +1,13 @@
 # FitCore
 
+**Live demo:** https://fitcore-topaz.vercel.app
+
+**Source code:** https://github.com/metide40/brolf-gym-management-system
+
 Gym and fitness management web app: memberships, QR check-in, classes and bookings, billing, equipment and member progress, with a separate workspace for each role. Built for the Brolf Tech PLC Remote Internship Challenge 2026 (Project 1, Frontend track).
 
 > **This is a frontend demo.** There is no real backend. Data is stored in the browser's `localStorage` behind a mock API layer, and sign-in is simulated. It is not suitable for real member data.
+> Data is stored in your browser. If anything looks outdated, open Settings and click "Reset demo data", or use a private window.
 
 ## Run it
 
@@ -19,12 +24,12 @@ npm run build      # type-check and production build
 
 Password for every account: `fitcore123`
 
-| Role | Email |
-|---|---|
-| Administrator | admin@fitcore.io |
-| Reception | reception@fitcore.io |
-| Trainer | trainer@fitcore.io |
-| Member | member@fitcore.io |
+| Role          | Email                |
+| ------------- | -------------------- |
+| Administrator | admin@fitcore.io     |
+| Reception     | reception@fitcore.io |
+| Trainer       | trainer@fitcore.io   |
+| Member        | member@fitcore.io    |
 
 The login screen has one-click buttons for each account. To change role, sign out and sign in with another account.
 
@@ -34,12 +39,12 @@ Members you add in the app sign in with their own email and the temporary passwo
 
 Every screen has its own URL in the form `/<role>/<section>`. Signed-out visitors are sent to `/login`, and a signed-in user who opens another role's URL sees the "No access to this area" page. Signing out returns you to `/login`.
 
-| Role | Pages |
-|---|---|
+| Role          | Pages                                                                                                                             |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Administrator | `/admin/overview`, `/admin/members`, `/admin/trainers`, `/admin/billing`, `/admin/classes`, `/admin/equipment`, `/admin/settings` |
-| Reception | `/reception/check-in`, `/reception/members`, `/reception/classes`, `/reception/billing` |
-| Trainer | `/trainer/roster`, `/trainer/schedule`, `/trainer/equipment` |
-| Member | `/member/pass`, `/member/classes`, `/member/programs`, `/member/progress` |
+| Reception     | `/reception/check-in`, `/reception/members`, `/reception/classes`, `/reception/billing`                                           |
+| Trainer       | `/trainer/roster`, `/trainer/schedule`, `/trainer/equipment`                                                                      |
+| Member        | `/member/pass`, `/member/classes`, `/member/programs`, `/member/progress`                                                         |
 
 ## Features
 
@@ -98,11 +103,17 @@ Settings also has a "Business rules checks" panel that runs a few of the same ru
 
 It is a static single-page app. `npm run build` produces `dist/`. `public/_redirects` (Netlify) and `vercel.json` (Vercel) send every path to `index.html` so direct links such as `/admin/members` work after a refresh.
 
+- **Hosting:** Vercel, project `fitcore`, deployed from the `main` branch.
+- **Auto-deploy:** every push to `main` builds and publishes a new version automatically.
+- **Build settings:** framework preset Vite, build command `npm run build`, output directory `dist`, no environment variables.
+- **Live URL:** https://fitcore-topaz.vercel.app
+
 ## Security
 
 This is a frontend demo, so the protections below are limited to what a static app can do. They do not replace a real backend.
 
 **Built into the app**
+
 - Input validation with zod on the member, payment and measurement forms, including a required phone number and a password rule (8 to 64 characters with a letter and a number).
 - Everything is rendered through React's escaping; the code does not use `dangerouslySetInnerHTML`, `innerHTML` or `eval`.
 - CSV exports neutralise cells that spreadsheets could run as formulas.
@@ -115,16 +126,19 @@ This is a frontend demo, so the protections below are limited to what a static a
 - No secrets are committed, and `.env` files are git-ignored.
 
 **Simulated in this demo**
+
 - Authentication and storage: the demo accounts and their shared password are in the front-end code, and all data, sessions and password hashes live in the browser's `localStorage`, so anyone with access to that browser can read or replace them.
 - Role checks happen in the interface only, because there is no server to enforce them.
 
 **Not built yet**
+
 - Staff accounts: administrators, reception and trainers sign in with the shared demo accounts. There is no screen to create staff accounts or give them their own passwords.
 - Session expiry or an idle timeout, sign-in lockout, and security headers such as Content-Security-Policy.
 - Members cannot change their own password, and there is no invite or password-reset flow.
 - The member list does not show which members have a password.
 
 **What a real backend must add**
+
 - Server-side password hashing, sessions or short-lived signed tokens in httpOnly cookies, and authorization checks on every request based on the signed-in user's role.
 - Rate limiting and lockout on sign-in, HTTPS, CSRF protection, audit logging, and a password-reset flow.
 
