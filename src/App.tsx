@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
-import { AlertTriangle, Calendar, ClipboardList, CreditCard, Dumbbell, LayoutDashboard, Lock, Moon, QrCode, Settings as SettingsIcon, Sun, TrendingUp, UserCog, Users, Wrench } from "lucide-react";
+import { AlertTriangle, Calendar, ClipboardList, CreditCard, Dumbbell, Eye, EyeOff, LayoutDashboard, Lock, Moon, QrCode, Settings as SettingsIcon, Sun, TrendingUp, UserCog, Users, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import * as api from "./api/mockApi";
 import { DEMO_ACCOUNTS } from "./mockData";
@@ -441,6 +441,7 @@ export default function App() {
 function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: string, password: string) => Promise<void>; theme: "dark" | "light"; onToggleTheme: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -491,7 +492,14 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
               }}
             >
               <label className="text-sm font-medium text-muted-foreground">Email<input type="email" autoComplete="username" className={`${input} mt-1`} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@mail.com" /></label>
-              <label className="text-sm font-medium text-muted-foreground">Password<input type="password" autoComplete="current-password" className={`${input} mt-1`} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+              <label className="text-sm font-medium text-muted-foreground">Password
+                <div className="relative mt-1">
+                  <input type={showPassword ? "text" : "password"} autoComplete="current-password" className={`${input} pr-11`} value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? "Hide password" : "Show password"} title={showPassword ? "Hide password" : "Show password"} className="absolute inset-y-0 right-3 grid w-8 place-items-center rounded-full text-muted-foreground transition hover:text-foreground">
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </label>
               {error ? (
                 <p role="alert" className="flex items-start gap-1.5 rounded-lg bg-amber-500/12 px-3 py-2 text-xs font-medium text-amber-600 dark:text-amber-400">
                   <AlertTriangle size={13} className="mt-0.5 shrink-0" /> {error}
