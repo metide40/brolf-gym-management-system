@@ -490,7 +490,7 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
                 submit();
               }}
             >
-              <label className="text-sm font-medium text-muted-foreground">Email<input type="email" autoComplete="username" className={`${input} mt-1`} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@fitcore.demo" /></label>
+              <label className="text-sm font-medium text-muted-foreground">Email<input type="email" autoComplete="username" className={`${input} mt-1`} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@mail.com" /></label>
               <label className="text-sm font-medium text-muted-foreground">Password<input type="password" autoComplete="current-password" className={`${input} mt-1`} value={password} onChange={(e) => setPassword(e.target.value)} /></label>
               {error ? (
                 <p role="alert" className="flex items-start gap-1.5 rounded-lg bg-amber-500/12 px-3 py-2 text-xs font-medium text-amber-600 dark:text-amber-400">
