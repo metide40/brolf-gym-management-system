@@ -182,6 +182,8 @@ export function MemberDirectory({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const statuses = ["All", ...Array.from(new Set(db.members.map((m) => m.status)))];
   const filtered = db.members.filter((m) => {
@@ -243,6 +245,8 @@ export function MemberDirectory({
       ...filtered.map((m) => [m.id, m.code, m.name, m.email, m.phone, m.plan, m.status, m.startDate, m.endDate, trainerName(db.trainers, m.trainerId), m.goal]),
     ]);
   };
+
+  const pendingDelete = db.members.find((m) => m.id === confirmId);
 
   return (
     <div className="space-y-4">
@@ -306,7 +310,7 @@ export function MemberDirectory({
                         <button onClick={() => onRenew(m.id, 30)} title="Renew 30 days" className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-primary/12 hover:text-primary"><RefreshCw size={14} /></button>
                         <button onClick={() => onFreeze(m.id)} title={m.frozen ? "Unfreeze" : "Freeze"} className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-sky-500/12 hover:text-sky-500">{m.frozen ? <Check size={14} /> : <X size={14} />}</button>
                         <button onClick={() => openEdit(m)} title="Edit" className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground"><Pencil size={14} /></button>
-                        <button onClick={() => onDelete(m.id)} title="Delete" className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-rose-500/12 hover:text-rose-500"><Trash2 size={14} /></button>
+                        <button type="button" onClick={() => setConfirmId(m.id)} title="Delete" aria-label={`Delete ${m.name}`} className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-rose-500/12 hover:text-rose-500"><Trash2 size={14} /></button>
                       </div>
                     </td>
                   </tr>
@@ -351,6 +355,29 @@ export function MemberDirectory({
         <div className="mt-4 flex justify-end gap-2">
           <button onClick={() => setOpen(false)} className={btnGhost}>Cancel</button>
           <button onClick={submit} disabled={saving} className={btnPrimary}>{saving ? "Saving..." : editing ? "Save changes" : "Create member"}</button>
+        </div>
+      </Modal>
+
+      <Modal open={confirmId !== null} onClose={() => { if (!deleting) setConfirmId(null); }} title="Confirm deletion">
+        <p className="text-sm text-muted-foreground">Delete {pendingDelete?.name ?? "this member"}? This action cannot be undone. All data related to this member will be permanently deleted.</p>
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={() => setConfirmId(null)} disabled={deleting} className={btnGhost}>Cancel</button>
+          <button
+            onClick={async () => {
+              if (!confirmId) return;
+              setDeleting(true);
+              try {
+                await onDelete(confirmId);
+              } finally {
+                setDeleting(false);
+                setConfirmId(null);
+              }
+            }}
+            disabled={deleting}
+            className={btnPrimary}
+          >
+            {deleting ? "Deleting..." : "Confirm delete"}
+          </button>
         </div>
       </Modal>
     </div>
