@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Toaster, toast } from "sonner";
@@ -9,11 +9,25 @@ import { DEMO_ACCOUNTS } from "./mockData";
 import type { BodyMeasurement, ClassInput, Database, FitnessGoal, MaintenanceInput, MemberInput, PaymentStatus, PlanName, Role, Session, TrainerInput, WorkoutPlan } from "./types";
 import Navbar, { SidebarUser } from "./components/Navbar";
 import { btnGhost, btnPrimary, input, panel } from "./components/Navbar";
-import { AdminOverview, MemberDirectory, ReceptionTerminal, SettingsView } from "./components/AdminReceptionViews";
-import { MemberClasses, MemberPass, MemberProgress, MemberWorkouts, TrainerView } from "./components/TrainerMemberViews";
-import { ClassesBoard, EquipmentView, PaymentsView } from "./components/BillingEquipmentViews";
-import { TrainersView } from "./components/TrainersView";
-import LandingPage from "./components/LandingPage";
+
+const AdminOverview = lazy(() => import("./components/AdminReceptionViews").then((m) => ({ default: m.AdminOverview })));
+const MemberDirectory = lazy(() => import("./components/AdminReceptionViews").then((m) => ({ default: m.MemberDirectory })));
+const ReceptionTerminal = lazy(() => import("./components/AdminReceptionViews").then((m) => ({ default: m.ReceptionTerminal })));
+const SettingsView = lazy(() => import("./components/AdminReceptionViews").then((m) => ({ default: m.SettingsView })));
+const MemberClasses = lazy(() => import("./components/TrainerMemberViews").then((m) => ({ default: m.MemberClasses })));
+const MemberPass = lazy(() => import("./components/TrainerMemberViews").then((m) => ({ default: m.MemberPass })));
+const MemberProgress = lazy(() => import("./components/TrainerMemberViews").then((m) => ({ default: m.MemberProgress })));
+const MemberWorkouts = lazy(() => import("./components/TrainerMemberViews").then((m) => ({ default: m.MemberWorkouts })));
+const TrainerView = lazy(() => import("./components/TrainerMemberViews").then((m) => ({ default: m.TrainerView })));
+const ClassesBoard = lazy(() => import("./components/BillingEquipmentViews").then((m) => ({ default: m.ClassesBoard })));
+const EquipmentView = lazy(() => import("./components/BillingEquipmentViews").then((m) => ({ default: m.EquipmentView })));
+const PaymentsView = lazy(() => import("./components/BillingEquipmentViews").then((m) => ({ default: m.PaymentsView })));
+const TrainersView = lazy(() => import("./components/TrainersView").then((m) => ({ default: m.TrainersView })));
+const LandingPage = lazy(() => import("./components/LandingPage"));
+
+function SectionFallback() {
+  return <p className="py-10 text-center text-sm text-muted-foreground" role="status">Loading...</p>;
+}
 
 type TabKey = "overview" | "members" | "trainers" | "payments" | "equipment" | "settings" | "terminal" | "classes" | "roster" | "pass" | "workouts" | "progress";
 
@@ -120,7 +134,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
           ) : (
             <AnimatePresence mode="wait">
               <motion.div key={location.pathname} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
-                {renderSection(current!.key)}
+                <Suspense fallback={<SectionFallback />}>{renderSection(current!.key)}</Suspense>
               </motion.div>
             </AnimatePresence>
           )}
@@ -414,7 +428,7 @@ export default function App() {
     <>
       <Toaster position="top-right" theme={theme} closeButton />
       <Routes>
-        <Route path="/" element={session ? <Navigate to={homeFor(session.role)} replace /> : <LandingPage />} />
+        <Route path="/" element={session ? <Navigate to={homeFor(session.role)} replace /> : <Suspense fallback={<SectionFallback />}><LandingPage /></Suspense>} />
         <Route path="/login" element={<LoginRoute session={session} theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} onLogin={handleLogin} />} />
         <Route
           path="/:role/:section"
