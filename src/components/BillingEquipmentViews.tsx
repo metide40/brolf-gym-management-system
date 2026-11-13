@@ -137,7 +137,7 @@ export function PaymentsView({
       <div className={`${panel} flex flex-wrap items-center gap-2 p-3`}>
         <div className="relative min-w-[200px] flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search invoice or member" className={`${input} pl-9`} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search invoice or member" className={`${input} pl-9`} aria-label="Search invoices or members" />
         </div>
         {["All", "Paid", "Pending", "Overdue"].map((s) => (
           <button key={s} onClick={() => setStatus(s)} className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${status === s ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:bg-secondary"}`}>{s}</button>

@@ -264,7 +264,7 @@ export function MemberDirectory({
       <div className={`${panel} flex flex-wrap items-center gap-2 p-3`}>
         <div className="relative min-w-[200px] flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, phone or card" className={`${input} pl-9`} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, phone or card" className={`${input} pl-9`} aria-label="Search members" />
         </div>
         <div className="flex flex-wrap gap-1.5">
           {statuses.map((s) => (

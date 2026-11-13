@@ -120,14 +120,14 @@ export function TrainerView({ db, trainerId, onSavePlan, onCheckIn }: { db: Data
         <div className="mt-3 space-y-2">
           {exercises.map((ex, i) => (
             <div key={ex.id} className="grid grid-cols-2 gap-1.5 rounded-xl border border-border/60 p-2 sm:grid-cols-6">
-              <input className={`${input} col-span-2 !py-1.5 text-xs`} placeholder="Exercise name" value={ex.name} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
-              <select className={`${input} !py-1.5 text-xs`} value={ex.muscle} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, muscle: e.target.value } : x)))}>
+              <input className={`${input} col-span-2 !py-1.5 text-xs`} placeholder="Exercise name" aria-label={`Exercise ${i + 1} name`} value={ex.name} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+              <select className={`${input} !py-1.5 text-xs`} value={ex.muscle} aria-label={`Exercise ${i + 1} muscle group`} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, muscle: e.target.value } : x)))}>
                 {["Chest", "Back", "Legs", "Shoulders", "Core", "Cardio", "Full body"].map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
-              <input type="number" className={`${input} !py-1.5 text-xs`} placeholder="Sets" value={ex.sets} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, sets: Number(e.target.value) } : x)))} />
-              <input type="number" className={`${input} !py-1.5 text-xs`} placeholder="Reps" value={ex.reps} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, reps: Number(e.target.value) } : x)))} />
+              <input type="number" className={`${input} !py-1.5 text-xs`} placeholder="Sets" aria-label={`Exercise ${i + 1} sets`} value={ex.sets} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, sets: Number(e.target.value) } : x)))} />
+              <input type="number" className={`${input} !py-1.5 text-xs`} placeholder="Reps" aria-label={`Exercise ${i + 1} reps`} value={ex.reps} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, reps: Number(e.target.value) } : x)))} />
               <div className="flex gap-1">
-                <input type="number" className={`${input} !py-1.5 text-xs`} placeholder="kg" value={ex.weight} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, weight: Number(e.target.value) } : x)))} />
+                <input type="number" className={`${input} !py-1.5 text-xs`} placeholder="kg" aria-label={`Exercise ${i + 1} weight in kilograms`} value={ex.weight} onChange={(e) => setExercises(exercises.map((x, j) => (j === i ? { ...x, weight: Number(e.target.value) } : x)))} />
                 <button onClick={() => setExercises(exercises.filter((_, j) => j !== i))} className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-rose-500/12 hover:text-rose-500" aria-label="Remove exercise"><Trash2 size={13} /></button>
               </div>
             </div>
@@ -385,7 +385,7 @@ export function MemberProgress({
                     <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <input type="number" step="0.1" value={g.current} onChange={(e) => onSaveGoal({ ...g, current: Number(e.target.value) })} className={`${input} !py-1 text-xs`} />
+                    <input type="number" step="0.1" value={g.current} aria-label={`Current value for goal ${g.title}`} onChange={(e) => onSaveGoal({ ...g, current: Number(e.target.value) })} className={`${input} !py-1 text-xs`} />
                     <span className="shrink-0 text-[11px] text-muted-foreground">due {fmt(g.deadline)}</span>
                   </div>
                 </div>
