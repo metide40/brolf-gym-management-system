@@ -2,7 +2,7 @@
 
 **Live demo:** https://fitcore-topaz.vercel.app
 
-**Source code:** https://github.com/metide40/brolf-gym-management-system
+**Source code:** https://github.com/brolftech-dev/brolf-challenge-meti-dessalegn
 
 Gym and fitness management web app: memberships, QR check-in, classes and bookings, billing, equipment and member progress, with a separate workspace for each role. Built for the Brolf Tech PLC Remote Internship Challenge 2026 (Project 1, Frontend track).
 
