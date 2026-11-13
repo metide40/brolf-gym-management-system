@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Dumbbell, LogOut, Moon, ShieldCheck, Sun, UserRound, X } from "lucide-react";
 import type { AppNotification, Role, Session } from "../types";
@@ -81,12 +81,55 @@ export function EmptyState({ title, sub, icon: Icon = Dumbbell }: { title: strin
 }
 
 export function Modal({ open, onClose, title, children, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean }) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const node = dialogRef.current;
+    if (node && !node.contains(document.activeElement)) node.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== "Tab" || !node) return;
+      const focusable = Array.from(node.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+      if (focusable.length === 0) { event.preventDefault(); node.focus(); return; }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || active === node)) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && active === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      if (previous && document.contains(previous)) previous.focus();
+    };
+  }, [open]);
+
   return (
     <AnimatePresence>
       {open ? (
         <motion.div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
           <motion.div
-            className={`${panel} w-full ${wide ? "max-w-3xl" : "max-w-lg"} bg-card p-5 shadow-2xl`}
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
+            className={`${panel} w-full ${wide ? "max-w-3xl" : "max-w-lg"} bg-card p-5 shadow-2xl outline-none`}
             initial={{ opacity: 0, y: 24, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
@@ -94,7 +137,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h3 className="font-display text-lg font-bold tracking-tight">{title}</h3>
+              <h3 id={titleId} className="font-display text-lg font-bold tracking-tight">{title}</h3>
               <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-secondary hover:text-foreground" aria-label="Close dialog">
                 <X size={16} />
               </button>
