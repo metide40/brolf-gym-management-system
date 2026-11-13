@@ -202,7 +202,7 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-2 px-3 sm:gap-3 sm:px-4">
+      <div className="mx-auto flex h-16 max-w-350 items-center gap-2 px-3 sm:gap-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
             <Dumbbell size={18} strokeWidth={2.4} />
@@ -219,13 +219,13 @@ export default function Navbar({
         </div>
 
         <div ref={bellRef} className="relative ml-auto shrink-0 sm:ml-0">
-          <button onClick={() => setOpenBell((v) => !v)} className={`${btnGhost} relative !p-2`} aria-label="Notifications" aria-expanded={openBell} aria-haspopup="true">
+          <button onClick={() => setOpenBell((v) => !v)} className={`${btnGhost} relative p-2!`} aria-label="Notifications" aria-expanded={openBell} aria-haspopup="true">
             <Bell size={16} />
             {unread > 0 ? <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{unread}</span> : null}
           </button>
           <AnimatePresence>
             {openBell ? (
-              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className={`${panel} absolute right-0 top-11 z-50 w-80 !bg-card !backdrop-blur-none p-2 shadow-2xl`}>
+              <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className={`${panel} absolute right-0 top-11 z-50 w-80 bg-card! backdrop-blur-none! p-2 shadow-2xl`}>
                 <div className="flex items-center justify-between px-2 py-1">
                   <p className="text-xs font-semibold text-muted-foreground">Notifications</p>
                   <div className="flex items-center gap-3">
@@ -250,7 +250,7 @@ export default function Navbar({
           </AnimatePresence>
         </div>
 
-        <button onClick={onToggleTheme} className={`${btnGhost} shrink-0 !p-2`} aria-label="Toggle theme">
+        <button onClick={onToggleTheme} className={`${btnGhost} shrink-0 p-2!`} aria-label="Toggle theme">
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
@@ -262,7 +262,7 @@ export default function Navbar({
           </div>
         </div>
 
-        <button onClick={onLogout} className={`${btnGhost} shrink-0 !p-2 md:hidden`} aria-label="Log out">
+        <button onClick={onLogout} className={`${btnGhost} shrink-0 p-2! md:hidden`} aria-label="Log out">
           <LogOut size={16} />
         </button>
       </div>
@@ -281,7 +281,7 @@ export function SidebarUser({ session, onLogout }: { session: Session; onLogout:
         <p className="truncate text-xs font-semibold">{session.name}</p>
         <p className="truncate text-[11px] text-muted-foreground">{ROLE_LABEL[session.role]}</p>
       </div>
-      <button onClick={onLogout} className={`${btnGhost} shrink-0 !p-2`} aria-label="Log out">
+      <button onClick={onLogout} className={`${btnGhost} shrink-0 p-2!`} aria-label="Log out">
         <LogOut size={16} />
       </button>
     </div>

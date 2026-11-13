@@ -135,7 +135,7 @@ export function PaymentsView({
       </div>
 
       <div className={`${panel} flex flex-wrap items-center gap-2 p-3`}>
-        <div className="relative min-w-[200px] flex-1">
+        <div className="relative min-w-50 flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search invoice or member" className={`${input} pl-9`} aria-label="Search invoices or members" />
         </div>
@@ -149,7 +149,7 @@ export function PaymentsView({
       ) : (
         <div className={`${panel} overflow-hidden`}>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-180 text-left text-sm">
               <thead>
                 <tr className="border-b border-border/70 text-[11px] text-muted-foreground">
                   <th className="px-4 py-2.5 font-semibold">Invoice</th>
@@ -174,7 +174,7 @@ export function PaymentsView({
                     <td className="px-3 py-2.5 text-xs text-muted-foreground">{p.method}</td>
                     <td className="px-3 py-2.5"><Pill tone={p.status}>{p.status}</Pill></td>
                     <td className="px-3 py-2.5 text-right">
-                      <button onClick={() => setInvoice(p)} className={`${btnGhost} !px-2 !py-1 text-[11px]`}>View</button>
+                      <button onClick={() => setInvoice(p)} className={`${btnGhost} px-2! py-1! text-[11px]`}>View</button>
                     </td>
                   </tr>
                 ))}
@@ -256,8 +256,8 @@ export function EquipmentView({
             <div className="mt-3 space-y-2">
               <button onClick={() => onCycle(e.id)} className={`${btnGhost} text-xs`}><Check size={13} /> Advance status</button>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => setLogging(e)} className={`${btnGhost} flex-auto whitespace-nowrap !px-2.5 text-xs`}><NotebookPen size={13} /> Log maintenance</button>
-                <button onClick={() => setOpenHistory(openHistory === e.id ? null : e.id)} className={`${btnGhost} flex-auto whitespace-nowrap !px-2.5 text-xs`} aria-expanded={openHistory === e.id}>
+                <button onClick={() => setLogging(e)} className={`${btnGhost} flex-auto whitespace-nowrap px-2.5! text-xs`}><NotebookPen size={13} /> Log maintenance</button>
+                <button onClick={() => setOpenHistory(openHistory === e.id ? null : e.id)} className={`${btnGhost} flex-auto whitespace-nowrap px-2.5! text-xs`} aria-expanded={openHistory === e.id}>
                   <History size={13} /> History ({e.log.length}) <ChevronDown size={13} className={openHistory === e.id ? "rotate-180" : ""} />
                 </button>
               </div>
@@ -319,7 +319,7 @@ export function ClassesBoard({
         right={canManage ? <button onClick={() => { setEditingClass(null); setFormOpen(true); }} className={btnPrimary}><Plus size={15} /> New class</button> : undefined}
       />
       <div className={`${panel} flex flex-wrap items-end gap-3 p-3`}>
-        <label className="min-w-[220px] flex-1 text-xs font-semibold text-muted-foreground">Booking for
+        <label className="min-w-55 flex-1 text-xs font-semibold text-muted-foreground">Booking for
           <select className={`${input} mt-1`} value={memberId} onChange={(e) => setMemberId(e.target.value)}>
             {db.members.map((m) => <option key={m.id} value={m.id}>{m.name} - {m.status}</option>)}
           </select>

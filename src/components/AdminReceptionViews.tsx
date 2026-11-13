@@ -262,7 +262,7 @@ export function MemberDirectory({
       />
 
       <div className={`${panel} flex flex-wrap items-center gap-2 p-3`}>
-        <div className="relative min-w-[200px] flex-1">
+        <div className="relative min-w-50 flex-1">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email, phone or card" className={`${input} pl-9`} aria-label="Search members" />
         </div>
@@ -278,7 +278,7 @@ export function MemberDirectory({
       ) : (
         <div className={`${panel} overflow-hidden`}>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <table className="w-full min-w-190 text-left text-sm">
               <thead>
                 <tr className="border-b border-border/70 text-[11px] text-muted-foreground">
                   <th className="px-4 py-2.5 font-semibold">Member</th>
@@ -443,7 +443,7 @@ export function ReceptionTerminal({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <input autoFocus value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") scan(code); }} placeholder="Member code, e.g. FC-2001" className={`${input} min-w-[10rem] flex-1`} />
+            <input autoFocus value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") scan(code); }} placeholder="Member code, e.g. FC-2001" className={`${input} min-w-40 flex-1`} />
             <button onClick={() => scan(code)} disabled={busy} className={`${btnPrimary} shrink-0 whitespace-nowrap`}>{busy ? "Checking" : "Check in"}</button>
             <button onClick={() => leave(code)} disabled={busy} className={`${btnGhost} shrink-0 whitespace-nowrap`}>Check out</button>
           </div>
@@ -463,7 +463,7 @@ export function ReceptionTerminal({
 
         <div className={`${panel} p-4`}>
           <SectionTitle title="Live attendance" sub="Most recent terminal events" right={<span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">{db.attendance.length} today</span>} />
-          <div className="max-h-[26rem] space-y-1.5 overflow-y-auto pr-1">
+          <div className="max-h-104 space-y-1.5 overflow-y-auto pr-1">
             {today.length === 0 ? <EmptyState title="No check-ins yet" sub="Scan a card to start the log." icon={Calendar} /> : null}
             {today.map((a) => (
               <div key={a.id} className="flex items-center gap-2 rounded-xl border border-border/50 px-2.5 py-2">
@@ -568,7 +568,7 @@ export function SettingsView({
           <div className={`${panel} p-4`}>
             <div className="mb-1 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-bold"><Dumbbell size={15} className="text-primary" /> Business rules checks</div>
-              <button onClick={onRunTests} disabled={running} className={`${btnGhost} !px-2.5 !py-1 text-xs`}>{running ? "Running" : "Run tests"}</button>
+              <button onClick={onRunTests} disabled={running} className={`${btnGhost} px-2.5! py-1! text-xs`}>{running ? "Running" : "Run tests"}</button>
             </div>
             <p className="mb-3 text-xs text-muted-foreground">{testResults.length ? `${passed}/${testResults.length} checks passing` : "Verify expiry, booking, waitlist and access rules."}</p>
             <div className="space-y-1.5">

@@ -99,12 +99,12 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
   if (!denied && !current) return <Navigate to={homeFor(session.role)} replace />;
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground">
       <Navbar session={session} notifications={db?.notifications ?? []} theme={theme} onToggleTheme={onToggleTheme} onMarkRead={onMarkRead} onClear={onClearNotifications} onLogout={onLogout} />
-      <div className="mx-auto flex max-w-[1400px] flex-col gap-5 px-4 py-5 md:flex-row">
+      <div className="mx-auto flex max-w-350 flex-col gap-5 px-4 py-5 md:flex-row">
         <aside className="sticky top-16 z-30 -mx-4 bg-background px-4 py-2 md:top-20 md:z-auto md:mx-0 md:flex md:h-[calc(100dvh-6.5rem)] md:w-56 md:shrink-0 md:flex-col md:self-start md:overflow-y-auto md:bg-transparent md:px-0 md:py-0">
           <div className="relative">
-          <nav ref={navRef} aria-label="Main" className="flex snap-x gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] md:flex-col md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
+          <nav ref={navRef} aria-label="Main" className="flex snap-x gap-1.5 overflow-x-auto pb-1 scrollbar-none md:flex-col md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
             {items.map((t) => {
               const Icon = t.icon;
               return (
@@ -121,7 +121,7 @@ function Workspace({ session, db, theme, onToggleTheme, onMarkRead, onClearNotif
               );
             })}
           </nav>
-          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent md:hidden" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-linear-to-l from-background to-transparent md:hidden" />
           </div>
           <SidebarUser session={session} onLogout={onLogout} />
         </aside>
@@ -159,7 +159,7 @@ function AccessDenied({ session, requested }: { session: Session; requested: str
 
 function NotFound({ session }: { session: Session | null }) {
   return (
-    <div className="grid min-h-[100dvh] place-items-center bg-background px-4 text-foreground">
+    <div className="grid min-h-dvh place-items-center bg-background px-4 text-foreground">
       <div className={`${panel} max-w-md p-6 text-center`}>
         <h1 className="font-display text-2xl font-semibold">Page not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">That address does not match any page in FitCore.</p>
@@ -415,7 +415,7 @@ export default function App() {
 
   if (!booted) {
     return (
-      <div className="grid min-h-[100dvh] place-items-center bg-background">
+      <div className="grid min-h-dvh place-items-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <span className="grid h-12 w-12 animate-pulse place-items-center rounded-lg bg-primary/15 text-primary"><Dumbbell size={22} /></span>
           <p className="text-sm font-medium text-muted-foreground">Loading FitCore...</p>
@@ -482,13 +482,13 @@ function LoginScreen({ onLogin, theme, onToggleTheme }: { onLogin: (email: strin
   };
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
-      <header className="mx-auto flex w-full max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6">
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+      <header className="mx-auto flex w-full max-w-300 items-center justify-between px-4 py-3 sm:px-6">
         <Link to="/" aria-label="FitCore home" className="flex items-center gap-2.5">
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground"><Dumbbell size={17} strokeWidth={2.4} /></span>
           <span className="font-display text-2xl font-bold tracking-wide">FitCore</span>
         </Link>
-        <button onClick={onToggleTheme} className={`${btnGhost} shrink-0 !p-2`} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
+        <button onClick={onToggleTheme} className={`${btnGhost} shrink-0 p-2!`} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}>
           {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </header>
