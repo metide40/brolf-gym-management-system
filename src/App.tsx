@@ -213,7 +213,7 @@ export default function App() {
   const handleLogin = async (email: string, password: string) => {
     const next = await api.login(email, password);
     setSession(next);
-    toast.success(`Signed in as ${next.name}`);
+    toast.success(`Signed in as ${next.name}`, { duration: 2000 });
   };
 
   const handleLogout = async () => {
@@ -426,7 +426,7 @@ export default function App() {
 
   return (
     <>
-      <Toaster position="top-right" theme={theme} closeButton />
+      <Toaster position="bottom-right" theme={theme} closeButton />
       <Routes>
         <Route path="/" element={session ? <Navigate to={homeFor(session.role)} replace /> : <Suspense fallback={<SectionFallback />}><LandingPage /></Suspense>} />
         <Route path="/login" element={<LoginRoute session={session} theme={theme} onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} onLogin={handleLogin} />} />
